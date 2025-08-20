@@ -5,14 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useUser } from '@/context/user-provider';
 import { BarChart, Gem, Gift, Hand, Hourglass, MapPin, User as UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-
-// Mock data for country rank
-const countryData = {
-  country: 'Bolivia',
-  clicks: 45678,
-  rank: 23,
-};
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { countryCodeToData } from '@/lib/countries';
 
 export default function ProfilePage() {
   const { 
@@ -24,18 +19,44 @@ export default function ProfilePage() {
     claimTokens 
   } = useUser();
   const router = useRouter();
+  const [countryRank, setCountryRank] = useState(0);
+  const [countryClicks, setCountryClicks] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isConnected) {
       router.push('/game');
     }
   }, [isConnected, router]);
+
+  useEffect(() => {
+    async function fetchCountryRank() {
+      if (country) {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('country_clicks')
+          .select('country_code, total_clicks')
+          .order('total_clicks', { ascending: false });
+
+        if (data) {
+          const rank = data.findIndex(c => c.country_code === country) + 1;
+          const clicks = data.find(c => c.country_code === country)?.total_clicks || 0;
+          setCountryRank(rank);
+          setCountryClicks(clicks);
+        }
+        setLoading(false);
+      }
+    }
+    fetchCountryRank();
+  }, [country]);
   
-  if (!isConnected) {
-    return null; // Or a loading/redirecting message
+  if (!isConnected || loading) {
+    return <div className="container py-10">Loading...</div>;
   }
 
-  const countryFlag = country === 'BO' ? '🇧🇴' : ``; // Example for mock
+  const countryData = countryCodeToData[country];
+  const countryName = countryData ? countryData.name : country;
+  const countryFlag = countryData ? countryData.flag : '';
 
   return (
     <div className="container py-10">
@@ -46,7 +67,7 @@ export default function ProfilePage() {
         </h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard icon={MapPin} title="Your Country" value={`${countryFlag} ${country}`} />
+            <StatCard icon={MapPin} title="Your Country" value={`${countryFlag} ${countryName}`} />
             <StatCard icon={Hand} title="Total Clicks" value={totalClicks.toLocaleString()} />
             <StatCard icon={Gem} title="FLOW Claimed" value={totalClaimed.toLocaleString()} />
             <StatCard icon={Hourglass} title="Pending Clicks" value={pendingClicks.toLocaleString()} />
@@ -77,8 +98,8 @@ export default function ProfilePage() {
                 <CardTitle className="flex items-center gap-2"><BarChart/> Your Contribution</CardTitle>
             </CardHeader>
             <CardContent className='text-center'>
-                <p className='text-4xl font-bold'>#{countryData.rank}</p>
-                <p className='text-lg text-muted-foreground'>{countryData.country}: {countryData.clicks.toLocaleString()} clicks</p>
+                <p className='text-4xl font-bold'>#{countryRank}</p>
+                <p className='text-lg text-muted-foreground'>{countryName}: {countryClicks.toLocaleString()} clicks</p>
             </CardContent>
         </Card>
 
