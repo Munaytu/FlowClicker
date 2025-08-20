@@ -70,7 +70,36 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       .eq('id', userId)
       .single();
 
-    if (data) {
+    if (error && error.code === 'PGRST116') {
+      // User does not exist, create one
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({ id: userId, total_clicks: 0, total_claimed: 0 })
+        .select('total_claimed, total_clicks')
+        .single();
+
+      if (insertError) {
+        console.error('Error creating user:', insertError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not create a new user profile.',
+        });
+      } else if (newUser) {
+        setState((s) => ({
+          ...s,
+          totalClicks: newUser.total_clicks,
+          totalClaimed: newUser.total_claimed,
+        }));
+      }
+    } else if (error) {
+      console.error('Error fetching user data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not fetch your data.',
+      });
+    } else if (data) {
       setState((s) => ({
         ...s,
         totalClicks: data.total_clicks,
