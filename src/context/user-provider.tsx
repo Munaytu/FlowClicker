@@ -102,7 +102,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId: state.userId }),
+      body: JSON.stringify({ userId: state.userId, country: state.country }),
     });
 
     const data = await response.json();
