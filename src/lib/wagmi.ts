@@ -1,0 +1,39 @@
+
+import { createModal, getDefaultConfig } from "@rabby-wallet/rabbykit";
+import { createConfig, http } from "@wagmi/core";
+import { mainnet, arbitrum, bsc, optimism, polygon } from "@wagmi/core/chains";
+
+const sonicTestnet = {
+    id: 146,
+    name: 'Sonic',
+    network: 'sonic',
+    nativeCurrency: { name: 'S', symbol: 'S', decimals: 18 },
+    rpcUrls: {
+        default: { http: ['https://rpc.soniclabs.com'] },
+        public: { http: ['https://rpc.soniclabs.com'] },
+    },
+    blockExplorers: {
+        default: { name: 'SonicScan', url: 'https://sonicscan.org' },
+    },
+    testnet: true,
+};
+
+export const config = createConfig(
+  getDefaultConfig({
+    appName: "FlowClicker",
+    projectId: "58a22d2bc1c793fc31c117ad9ceba8d9", // Please replace with your own project ID
+    chains: [sonicTestnet, mainnet, arbitrum, bsc, optimism, polygon],
+    transports: {
+      [sonicTestnet.id]: http(),
+      [mainnet.id]: http(),
+      [arbitrum.id]: http(),
+      [bsc.id]: http(),
+      [optimism.id]: http(),
+      [polygon.id]: http(),
+    },
+  })
+);
+
+export const rabbykit = createModal({
+  wagmi: config,
+});

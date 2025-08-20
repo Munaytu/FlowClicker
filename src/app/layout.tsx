@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { UserProvider } from '@/context/user-provider';
 import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'FlowClicker',
@@ -25,13 +25,13 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <UserProvider>
+        <Providers>
           <div className="relative flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
           </div>
           <Toaster />
-        </UserProvider>
+        </Providers>
       </body>
     </html>
   );
