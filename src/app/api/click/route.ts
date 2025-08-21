@@ -1,17 +1,43 @@
-
 import { redis } from '@/lib/redis';
 import { supabase } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { z } from 'zod';
+
+const ratelimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(10, '10 s'), // 10 requests per 10 seconds
+  analytics: true,
+  prefix: '@upstash/ratelimit',
+});
+
+const clickBodySchema = z.object({
+    userId: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid userId"),
+    country: z.string().min(2),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, country } = await req.json();
+    const body = await req.json();
+    const validation = clickBodySchema.safeParse(body);
 
-    if (!userId || !country) {
-      return new NextResponse('Unauthorized or missing country', { status: 401 });
+    if (!validation.success) {
+        return NextResponse.json({ error: "Invalid input", details: validation.error.flatten() }, { status: 400 });
     }
 
-    // Perform Supabase and Redis operations in parallel
+    const { userId, country } = validation.data;
+
+    const { success, limit, remaining } = await ratelimit.limit(userId);
+    if (!success) {
+        return new NextResponse('Too Many Requests', {
+            status: 429,
+            headers: {
+                'X-RateLimit-Limit': limit.toString(),
+                'X-RateLimit-Remaining': remaining.toString(),
+            },
+        });
+    }
+
     const [redisResponse, supabaseResponse] = await Promise.all([
       redis.incr(`user:${userId}:clicks`),
       supabase.rpc('increment_clicks', { p_user_id: userId, p_country_code: country })
@@ -22,7 +48,6 @@ export async function POST(req: NextRequest) {
 
     if (rpcError) {
       console.error('Error calling increment_clicks function:', rpcError);
-      // If Supabase fails, we should ideally decrement the redis counter to rollback.
       await redis.decr(`user:${userId}:clicks`);
       return new NextResponse('Internal Server Error from Supabase RPC', { status: 500 });
     }

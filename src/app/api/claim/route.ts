@@ -1,22 +1,72 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import * as jose from "jose";
+import { z } from "zod";
 
-export async function POST(req: Request) {
+const claimBodySchema = z.object({
+  txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash"),
+  amount: z.string(), // The amount from the contract event
+});
+
+interface AuthenticatedRequest extends NextRequest {
+  user?: {
+    player: string;
+    clicks: number;
+  };
+}
+
+// Middleware for JWT verification
+async function verifyJwt(req: AuthenticatedRequest, res: NextResponse) {
+  const token = req.headers.get("Authorization")?.split(" ")[1];
+
+  if (!token) {
+    return NextResponse.json({ error: "Authorization token not provided" }, { status: 401 });
+  }
+
+  const jwtSecret = process.env.JWT_SECRET_KEY;
+  if (!jwtSecret) {
+    console.error("JWT_SECRET_KEY is not set");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+
   try {
-    const { player, amount, txHash, clicks } = await req.json();
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jose.jwtVerify(token, secret);
+    req.user = {
+      player: payload.player as string,
+      clicks: payload.clicks as number,
+    };
+    return null; // Indicates success
+  } catch (error) {
+    console.error("JWT Verification failed:", error);
+    return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+  }
+}
 
-    if (!player || !amount || !txHash || clicks === undefined) {
-      return NextResponse.json({ error: "Player address, amount, txHash, and clicks are required" }, { status: 400 });
+export async function POST(req: AuthenticatedRequest) {
+  try {
+    const verificationResponse = await verifyJwt(req, new NextResponse());
+    if (verificationResponse) {
+      return verificationResponse;
     }
 
-    // Actualizar Supabase
+    const { player, clicks } = req.user!;
+    const body = await req.json();
+    const validation = claimBodySchema.safeParse(body);
+
+    if (!validation.success) {
+        return NextResponse.json({ error: "Invalid input", details: validation.error.flatten() }, { status: 400 });
+    }
+
+    const { amount } = validation.data;
+
     const { data: userData, error: fetchError } = await supabase
       .from('users')
       .select('total_claimed, claimed_clicks')
       .eq('id', player)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: row not found
+    if (fetchError && fetchError.code !== 'PGRST116') {
       throw new Error(`Error fetching user from DB: ${fetchError.message}`);
     }
 
@@ -34,10 +84,7 @@ export async function POST(req: Request) {
       .eq('id', player);
 
     if (updateError) {
-      // Si esto falla, la transacción ya está en la blockchain, lo que no es ideal.
-      // La lógica de reconciliación en el frontend ayudará a mitigar esto.
       console.error(`Failed to update DB for user ${player} after claim: ${updateError.message}`);
-      // No lanzamos un error al cliente porque la transacción on-chain tuvo éxito.
     }
 
     console.log(`Database updated for user ${player}.`);
