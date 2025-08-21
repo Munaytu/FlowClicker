@@ -37,6 +37,7 @@ export default function ProfilePage() {
   const { data: balance } = useBalance({
     address: walletAddress!,
     token: contractAddress,
+    chainId: 146, // Always query the Sonic chain
   });
 
   useEffect(() => {
