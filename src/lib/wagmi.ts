@@ -21,6 +21,8 @@ const sonic = {
 export const config = createConfig(
   getDefaultConfig({
     appName: "FlowClicker",
+    appUrl: "https://flow-clicker.vercel.app/",
+    appIcon: "https://flow-clicker.vercel.app/favicon.ico",
     projectId: "58a22d2bc1c793fc31c117ad9ceba8d9", // Please replace with your own project ID
     chains: [sonic, mainnet, arbitrum, bsc, optimism, polygon],
     transports: {

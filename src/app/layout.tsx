@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://flow-clicker.vercel.app/"),
   title: 'FlowClicker',
   description: 'Click → Earn → Claim',
 };
