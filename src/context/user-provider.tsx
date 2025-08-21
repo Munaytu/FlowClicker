@@ -35,7 +35,7 @@ interface UserState {
     pendingClicks: 0,
     totalClicks: 0,
     totalClaimed: 0,
-    country: 'BO', // Default to Bolivia as per mock
+    country: 'FL', // Default to Flowland
   };
 
 function UserProviderContent({ children }: { children: ReactNode }) {
@@ -52,11 +52,21 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     // Fetch country from a geo IP API on initial load
     fetch('https://ipapi.co/country_code')
         .then(res => res.text())
-        .then(countryCode => {
-            if (countryCode) {
-                setState(prevState => ({...prevState, country: countryCode}))
+        .then(countryInfo => {
+            if (countryInfo) {
+                const match = countryInfo.match(/[A-Z]{2}/);
+                if (match) {
+                    setState(prevState => ({...prevState, country: match[0]}));
+                } else {
+                    setState(prevState => ({...prevState, country: 'FL'}));
+                }
+            } else {
+                setState(prevState => ({...prevState, country: 'FL'}));
             }
-        }).catch(err => console.log("Could not fetch country", err));
+        }).catch(err => {
+            console.log("Could not fetch country, defaulting to Flowland", err);
+            setState(prevState => ({...prevState, country: 'FL'}));
+        });
   }, []);
 
   useEffect(() => {
