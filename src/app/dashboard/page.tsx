@@ -1,20 +1,44 @@
-"use client";
+'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Flame, Gem, Globe } from 'lucide-react';
+import { Flame, Gem, Globe, HelpCircle, LinkIcon, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { countryCodeToData } from '@/lib/countries';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { contractAddress } from '@/lib/contract-config';
 
+// Fetcher function for react-query
+const fetchGlobalStats = async () => {
+  const response = await fetch('/api/global-stats');
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+};
 
-
-function StatCard({ title, value, icon: Icon }: { title: string; value: string; icon: React.ElementType }) {
+function StatCard({ title, value, icon: Icon, tooltipText }: { title: string; value: string; icon: React.ElementType, tooltipText?: string }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+          {title}
+          {tooltipText && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{tooltipText}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -25,23 +49,18 @@ function StatCard({ title, value, icon: Icon }: { title: string; value: string; 
 }
 
 export default function DashboardPage() {
-  const [globalStats, setGlobalStats] = useState({ totalClicksAllTime: 0, totalFlowClaimed: 0 });
+  const { data: globalStats, isLoading: isLoadingStats, error: statsError } = useQuery({
+    queryKey: ['globalStats'],
+    queryFn: fetchGlobalStats,
+    refetchInterval: 60000, // Refetch every 60 seconds
+  });
+
   const [topCountries, setTopCountries] = useState<{ name: string; flag: string; clicks: number }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-
-      // Fetch global stats
-      const { data: users, error: usersError } = await supabase.from('users').select('total_clicks, total_claimed');
-      if (users) {
-        const totalClicks = users.reduce((acc, user) => acc + user.total_clicks, 0);
-        const totalClaimed = users.reduce((acc, user) => acc + user.total_claimed, 0);
-        setGlobalStats({ totalClicksAllTime: totalClicks, totalFlowClaimed: totalClaimed });
-      }
-
-      // Fetch top countries
+    async function fetchCountries() {
+      setIsLoadingCountries(true);
       const { data: countries, error: countriesError } = await supabase
         .from('country_clicks')
         .select('country_code, total_clicks')
@@ -57,34 +76,54 @@ export default function DashboardPage() {
           .filter(Boolean) as { name: string; flag: string; clicks: number }[];
         setTopCountries(formattedCountries);
       }
-
-      setLoading(false);
+      setIsLoadingCountries(false);
     }
 
-    fetchData();
+    fetchCountries();
   }, []);
+
+  const loading = isLoadingStats || isLoadingCountries;
 
   if (loading) {
     return <div className="container py-10">Loading...</div>;
   }
 
+  if (statsError) {
+    return <div className="container py-10">Error loading stats. Please try again later.</div>;
+  }
+
+  const tokenomicsTooltip = `The total supply includes a 10% fee distribution: ${globalStats?.tokenomics.devFeeBps / 100}% for development, ${globalStats?.tokenomics.foundationFeeBps / 100}% for the foundation, and ${globalStats?.tokenomics.burnFeeBps / 100}% is burned.`;
+
   return (
     <div className="container py-10">
       <div className="space-y-8">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Globe className="h-8 w-8" />
-          Global Stats
-        </h1>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Globe className="h-8 w-8" />
+            Global Stats
+          </h1>
+          <a href={`https://sonicscan.org/token/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
+            View Token on SonicScan <LinkIcon className="h-4 w-4" />
+          </a>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
           <StatCard
             title="Total Clicks (All Time)"
-            value={globalStats.totalClicksAllTime.toLocaleString()}
+            value={globalStats ? Number(globalStats.totalClicksAllTime).toLocaleString() : '0'}
             icon={Flame}
+            tooltipText="The total number of clicks made by all players since the beginning."
           />
           <StatCard
-            title="Total FLOW Claimed"
-            value={globalStats.totalFlowClaimed.toLocaleString()}
+            title="Total Tokens Claimed"
+            value={globalStats ? Number(globalStats.totalClaimed).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'}
             icon={Gem}
+            tooltipText="The total amount of tokens claimed by all players. This represents the portion of the supply currently in circulation."
+          />
+          <StatCard
+            title="Total Token Supply"
+            value={globalStats ? Number(globalStats.totalSupply).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'}
+            icon={Package}
+            tooltipText={tokenomicsTooltip}
           />
         </div>
         

@@ -3,16 +3,16 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
-    const { player, clicks, txHash } = await req.json();
+    const { player, amount, txHash, clicks } = await req.json();
 
-    if (!player || !clicks || !txHash) {
-      return NextResponse.json({ error: "Player address, clicks, and txHash are required" }, { status: 400 });
+    if (!player || !amount || !txHash || clicks === undefined) {
+      return NextResponse.json({ error: "Player address, amount, txHash, and clicks are required" }, { status: 400 });
     }
 
     // Actualizar Supabase
     const { data: userData, error: fetchError } = await supabase
       .from('users')
-      .select('total_claimed')
+      .select('total_claimed, claimed_clicks')
       .eq('id', player)
       .single();
 
@@ -21,11 +21,16 @@ export async function POST(req: Request) {
     }
 
     const currentClaimed = userData?.total_claimed || 0;
-    const newTotalClaimed = currentClaimed + clicks;
+    const newTotalClaimed = currentClaimed + parseFloat(amount);
+    const currentClaimedClicks = userData?.claimed_clicks || 0;
+    const newTotalClaimedClicks = currentClaimedClicks + clicks;
 
     const { error: updateError } = await supabase
       .from('users')
-      .update({ total_claimed: newTotalClaimed })
+      .update({ 
+        total_claimed: newTotalClaimed,
+        claimed_clicks: newTotalClaimedClicks
+      })
       .eq('id', player);
 
     if (updateError) {
@@ -42,6 +47,6 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error in claim API:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    return NextResponse.json({ error: "Failed to update database", details: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: "Failed to database", details: errorMessage }, { status: 500 });
   }
 }

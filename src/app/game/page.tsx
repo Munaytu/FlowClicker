@@ -3,10 +3,21 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
-import { Coins, Gift, Hand, Loader2, Zap } from 'lucide-react';
+import { Coins, Gift, Hand, HelpCircle, Loader2, TrendingDown, Zap } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function GamePage() {
-  const { pendingClicks, addClick, claimTokens, isConnected, isClaiming } = useUser();
+  const { 
+    pendingClicks, 
+    addClick, 
+    claimTokens, 
+    isConnected, 
+    isClaiming, 
+    claimableTokens,
+    currentRewardPerClick
+  } = useUser();
+
+  const claimTooltipText = "The claimable token amount changes in real-time based on a decay mechanism. The earlier you click, the more you earn!";
 
   return (
     <div className="container flex flex-col items-center justify-center py-10">
@@ -34,6 +45,17 @@ export default function GamePage() {
             )}
           </div>
 
+          <Card className="border-primary/50 bg-primary/10">
+            <CardContent className="p-4">
+              <p className="text-sm text-center text-primary font-semibold flex items-center justify-center gap-1.5">
+                <TrendingDown className="h-4 w-4 animate-pulse" />
+                Current Reward Rate
+              </p>
+              <p className="text-center text-2xl font-bold text-primary">{parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
+              <p className="text-center text-xs text-primary/80">tokens / click</p>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">Clicks</p>
@@ -42,9 +64,21 @@ export default function GamePage() {
               </p>
             </div>
             <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Ready to claim</p>
+              <div className="flex items-center justify-center text-sm text-muted-foreground">
+                Ready to claim
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 ml-1.5 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{claimTooltipText}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <p className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-                {pendingClicks.toLocaleString()} <Coins className="h-7 w-7" />
+                {parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 2 })} <Coins className="h-7 w-7" />
               </p>
             </div>
           </div>

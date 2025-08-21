@@ -6,37 +6,58 @@ import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt,
 import { config, rabbykit } from '@/lib/wagmi';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { readContract } from '@wagmi/core';
+import { useQuery } from '@tanstack/react-query';
 
-// ... (interfaces and context definition remain the same)
+interface DecayInfo {
+  initialReward: string;
+  finalReward: string;
+  decayDurationInDays: number;
+  launchTimestamp: number;
+}
+
 interface UserState {
-    userId: string | null;
-    walletAddress: `0x${string}` | null;
-    isConnected: boolean;
-    pendingClicks: number;
-    totalClicks: number;
-    totalClaimed: number;
-    country: string;
-  }
-  
-  interface UserContextType extends UserState {
-    connectWallet: () => void;
-    disconnectWallet: () => void;
-    addClick: () => void;
-    claimTokens: () => void;
-    isClaiming: boolean;
-  }
-  
-  const UserContext = createContext<UserContextType | undefined>(undefined);
-  
-  const initialState: UserState = {
-    userId: null,
-    walletAddress: null,
-    isConnected: false,
-    pendingClicks: 0,
-    totalClicks: 0,
-    totalClaimed: 0,
-    country: 'FL', // Default to Flowland
-  };
+  userId: string | null;
+  walletAddress: `0x${string}` | null;
+  isConnected: boolean;
+  pendingClicks: number;
+  totalClicks: number;
+  totalClaimed: number;
+  claimedClicks: number;
+  country: string;
+  claimableTokens: string;
+  decayInfo: DecayInfo | null;
+  currentRewardPerClick: string;
+  tokenPriceUSD: number | null;
+  totalSupply: number | null;
+  totalClaimedAllUsers: number | null;
+}
+
+interface UserContextType extends UserState {
+  connectWallet: () => void;
+  disconnectWallet: () => void;
+  addClick: () => void;
+  claimTokens: () => void;
+  isClaiming: boolean;
+}
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+const initialState: UserState = {
+  userId: null,
+  walletAddress: null,
+  isConnected: false,
+  pendingClicks: 0,
+  totalClicks: 0,
+  totalClaimed: 0,
+  claimedClicks: 0,
+  country: 'FL', // Default to Flowland
+  claimableTokens: '0',
+  decayInfo: null,
+  currentRewardPerClick: '0',
+  tokenPriceUSD: null,
+  totalSupply: null,
+  totalClaimedAllUsers: null,
+};
 
 function UserProviderContent({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UserState>(initialState);
@@ -47,6 +68,82 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
 
   const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Query for fetching the real-time claimable amount
+  const { data: claimableData } = useQuery({
+    queryKey: ['claimableAmount', state.pendingClicks],
+    queryFn: async () => {
+      const response = await fetch('/api/get-claimable-amount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clicks: state.pendingClicks }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch claimable amount');
+      }
+      return response.json();
+    },
+    enabled: isConnected, // Fetch whenever the user is connected
+    refetchInterval: 15000, // Refetch every 15 seconds
+  });
+
+  const { data: priceData } = useQuery({
+    queryKey: ['tokenPrice'],
+    queryFn: async () => {
+      const response = await fetch('/api/token-price');
+      if (!response.ok) {
+        // Don't throw an error, just log it, so it doesn't kill the whole UI
+        console.error('Failed to fetch token price');
+        return null;
+      }
+      return response.json();
+    },
+    enabled: false, // Disabled for now
+    refetchInterval: 60000, // Refetch every 60 seconds
+  });
+
+  const { data: globalStatsData } = useQuery({
+    queryKey: ['globalStats'],
+    queryFn: async () => {
+      const response = await fetch('/api/global-stats');
+      if (!response.ok) {
+        console.error('Failed to fetch global stats');
+        return null;
+      }
+      return response.json();
+    },
+    refetchInterval: 60000, // Refetch every 60 seconds
+  });
+
+  useEffect(() => {
+    if (globalStatsData) {
+      setState(prevState => ({
+        ...prevState,
+        totalSupply: globalStatsData.totalSupply,
+        totalClaimedAllUsers: globalStatsData.totalClaimed,
+      }));
+    }
+  }, [globalStatsData]);
+
+  useEffect(() => {
+    if (claimableData) {
+      setState(prevState => ({
+        ...prevState,
+        claimableTokens: claimableData.claimableAmount,
+        decayInfo: claimableData.decay,
+        currentRewardPerClick: claimableData.currentRewardPerClick,
+      }));
+    }
+  }, [claimableData]);
+
+  useEffect(() => {
+    if (priceData) {
+      setState(prevState => ({
+        ...prevState,
+        tokenPriceUSD: priceData.price,
+      }));
+    }
+  }, [priceData]);
 
   useEffect(() => {
     // Fetch country from a geo IP API on initial load
@@ -86,20 +183,28 @@ function UserProviderContent({ children }: { children: ReactNode }) {
             title: '🎉 Tokens Claimed!',
             description: `Your transaction was successful.`,
             action: (
+              <div className="flex flex-col gap-2 mt-2">
                 <a href={`https://sonicscan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    View on SonicScan
+                    View Transaction
                 </a>
+                <a href={`https://sonicscan.org/token/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    View Token
+                </a>
+              </div>
             )
         });
 
-        const claimedAmount = state.pendingClicks;
+        const claimedAmount = parseFloat(state.claimableTokens);
+        const clicksClaimed = state.pendingClicks;
 
         // The backend now handles the database update.
-        // We just update the local state.
+        // We just update the state.
         setState((s) => ({
             ...s,
-            totalClaimed: s.totalClaimed + claimedAmount,
+            totalClaimed: s.totalClaimed + claimedAmount, // This is an approximation, the backend will reconcile
+            claimedClicks: s.claimedClicks + clicksClaimed,
             pendingClicks: 0,
+            claimableTokens: '0',
         }));
         setTxHash(null);
         reset();
@@ -118,7 +223,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('total_claimed, total_clicks')
+      .select('total_claimed, total_clicks, claimed_clicks')
       .eq('id', userId)
       .single();
 
@@ -154,8 +259,8 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       // User does not exist, create one
       const { data: newUser, error: insertError } = await supabase
         .from('users')
-        .insert({ id: userId, total_clicks: 0, total_claimed: 0 })
-        .select('total_claimed, total_clicks')
+        .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
+        .select('total_claimed, total_clicks, claimed_clicks')
         .single();
 
       if (insertError) {
@@ -170,6 +275,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
           ...s,
           totalClicks: newUser.total_clicks,
           totalClaimed: newUser.total_claimed,
+          claimedClicks: newUser.claimed_clicks,
         }));
       }
     } else if (error) {
@@ -180,11 +286,12 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         description: 'Could not fetch your data.',
       });
     } else if (data) {
-      const pending = data.total_clicks - data.total_claimed;
+      const pending = data.total_clicks - data.claimed_clicks;
       setState((s) => ({
         ...s,
         totalClicks: data.total_clicks,
         totalClaimed: data.total_claimed,
+        claimedClicks: data.claimed_clicks,
         pendingClicks: pending > 0 ? pending : 0,
       }));
     }
@@ -274,7 +381,12 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       await fetch('/api/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player: state.walletAddress, clicks: state.pendingClicks, txHash: hash }),
+          body: JSON.stringify({ 
+            player: state.walletAddress, 
+            amount: state.claimableTokens, 
+            txHash: hash, 
+            clicks: state.pendingClicks 
+          }),
       });
 
     } catch (e: any) {
