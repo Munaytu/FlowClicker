@@ -27,11 +27,11 @@ export const config = createConfig(
     chains: [sonic, mainnet, arbitrum, bsc, optimism, polygon],
     transports: {
       [sonic.id]: http(),
-      [mainnet.id]: http(),
-      [arbitrum.id]: http(),
-      [bsc.id]: http(),
-      [optimism.id]: http(),
-      [polygon.id]: http(),
+      [mainnet.id]: http('https://eth.drpc.org'),
+      [arbitrum.id]: http('https://arbitrum.drpc.org'),
+      [bsc.id]: http('https://bsc.drpc.org'),
+      [optimism.id]: http('https://optimism.drpc.org'),
+      [polygon.id]: http('https://polygon.drpc.org'),
     },
   })
 );
