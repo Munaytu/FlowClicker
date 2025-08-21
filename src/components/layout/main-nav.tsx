@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-const navItems = [
+export const navItems = [
   { href: '/game', label: 'Game' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/profile', label: 'Profile' },

@@ -34,7 +34,7 @@ export default function GamePage() {
             <motion.button
               onClick={addClick}
               disabled={!isConnected}
-              className="group relative h-64 w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative h-48 w-48 md:h-64 md:w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Click to earn"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.9 }}
@@ -42,7 +42,7 @@ export default function GamePage() {
             >
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/20 transition-colors group-hover:bg-primary/30">
                 <motion.div whileHover={{ scale: 1.1 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-                  <Hand className="h-24 w-24 text-primary" />
+                  <Hand className="h-20 w-20 md:h-24 md:w-24 text-primary" />
                 </motion.div>
               </div>
             </motion.button>

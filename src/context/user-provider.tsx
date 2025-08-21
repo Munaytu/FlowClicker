@@ -2,8 +2,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId } from 'wagmi';
-import { config, rabbykit } from '@/lib/wagmi';
+import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId, useSwitchChain } from 'wagmi';
+import { config, rabbykit, sonicMainnet } from '@/lib/wagmi';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { readContract } from '@wagmi/core';
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +19,8 @@ interface UserState {
   userId: string | null;
   walletAddress: `0x${string}` | null;
   isConnected: boolean;
+  isWrongNetwork: boolean;
+  isUserLoaded: boolean; // New state
   pendingClicks: number;
   totalClicks: number;
   totalClaimed: number;
@@ -35,6 +37,7 @@ interface UserState {
 interface UserContextType extends UserState {
   connectWallet: () => void;
   disconnectWallet: () => void;
+  switchToSonicNetwork: () => void;
   addClick: () => void;
   claimTokens: () => void;
   isClaiming: boolean;
@@ -46,6 +49,8 @@ const initialState: UserState = {
   userId: null,
   walletAddress: null,
   isConnected: false,
+  isWrongNetwork: false,
+  isUserLoaded: false, // New state
   pendingClicks: 0,
   totalClicks: 0,
   totalClaimed: 0,
@@ -65,13 +70,23 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const { disconnect } = useDisconnect();
   const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
 
   const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ 
     hash: txHash,
-    chainId: 146, // Explicitly check on Sonic network
+    chainId: sonicMainnet.id,
   });
+
+  useEffect(() => {
+    if (isConnected && chainId) {
+      setState(prevState => ({
+        ...prevState,
+        isWrongNetwork: chainId !== sonicMainnet.id,
+      }));
+    }
+  }, [isConnected, chainId]);
 
   // Query for fetching the real-time claimable amount
   const { data: claimableData } = useQuery({
@@ -87,8 +102,8 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       }
       return response.json();
     },
-    enabled: isConnected, // Fetch whenever the user is connected
-    refetchInterval: 15000, // Refetch every 15 seconds
+    enabled: isConnected && !state.isWrongNetwork,
+    refetchInterval: 15000,
   });
 
   const { data: priceData } = useQuery({
@@ -96,14 +111,13 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const response = await fetch('/api/token-price');
       if (!response.ok) {
-        // Don't throw an error, just log it, so it doesn't kill the whole UI
         console.error('Failed to fetch token price');
         return null;
       }
       return response.json();
     },
-    enabled: false, // Disabled for now
-    refetchInterval: 60000, // Refetch every 60 seconds
+    enabled: false,
+    refetchInterval: 60000,
   });
 
   const { data: globalStatsData } = useQuery({
@@ -116,7 +130,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       }
       return response.json();
     },
-    refetchInterval: 60000, // Refetch every 60 seconds
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
@@ -150,7 +164,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   }, [priceData]);
 
   useEffect(() => {
-    // Fetch country from a geo IP API on initial load
     fetch('https://ipapi.co/country_code')
         .then(res => res.text())
         .then(countryInfo => {
@@ -173,14 +186,15 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isConnected && address) {
       const userId = address;
-      setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId }));
-      fetchUserData(userId, chainId);
+      setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId, isUserLoaded: false }));
+      if (chainId === sonicMainnet.id) {
+        fetchUserData(userId, chainId);
+      }
     } else {
       setState(initialState);
     }
   }, [isConnected, address, chainId]);
 
-  // Effect to handle the result of the transaction confirmation
   useEffect(() => {
     if (isConfirmed && receipt) {
         toast({
@@ -201,11 +215,9 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         const claimedAmount = parseFloat(state.claimableTokens);
         const clicksClaimed = state.pendingClicks;
 
-        // The backend now handles the database update.
-        // We just update the state.
         setState((s) => ({
             ...s,
-            totalClaimed: s.totalClaimed + claimedAmount, // This is an approximation, the backend will reconcile
+            totalClaimed: s.totalClaimed + claimedAmount,
             claimedClicks: s.claimedClicks + clicksClaimed,
             pendingClicks: 0,
             claimableTokens: '0',
@@ -231,8 +243,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       .eq('id', userId)
       .single();
 
-    // Reconciliation logic starts here, only run on Sonic chain (id: 146)
-    if (chainId === 146) {
+    if (chainId === sonicMainnet.id) {
         try {
             const balance = await readContract(config, {
                 abi: contractAbi,
@@ -251,8 +262,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
             if (data && balanceInUnits !== data.total_claimed) {
                 console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
-                // Here you would call an API to update your DB
-                // For now, we just update the state
                 setState(s => ({...s, totalClaimed: balanceInUnits}));
             }
 
@@ -262,7 +271,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     }
 
     if (error && error.code === 'PGRST116') {
-      // User does not exist, create one
       const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
@@ -301,6 +309,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         pendingClicks: pending > 0 ? pending : 0,
       }));
     }
+    setState((s) => ({ ...s, isUserLoaded: true }));
   };
 
   const connectWallet = () => {
@@ -311,12 +320,33 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     disconnect();
   };
 
-  const addClick = async () => {
-    if (!state.isConnected || !state.userId) {
+  const switchToSonicNetwork = () => {
+    if (switchChain) {
+      switchChain({ chainId: sonicMainnet.id });
+    } else {
       toast({
         variant: 'destructive',
-        title: 'Not Connected',
-        description: 'Please connect your wallet to start clicking.',
+        title: 'Error',
+        description: 'Could not switch network. Please do it manually in your wallet.'
+      });
+    }
+  };
+
+  const addClick = async () => {
+    if (!state.isConnected || !state.userId || state.isWrongNetwork) {
+      toast({
+        variant: 'destructive',
+        title: state.isWrongNetwork ? 'Wrong Network' : 'Not Connected',
+        description: state.isWrongNetwork ? 'Please switch to the Sonic network to play.' : 'Please connect your wallet to start clicking.',
+      });
+      return;
+    }
+
+    if (!state.isUserLoaded) {
+      toast({
+        variant: 'destructive',
+        title: 'Please wait',
+        description: 'User data is still loading. Please try again in a moment.',
       });
       return;
     }
@@ -357,10 +387,18 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       return;
     }
 
-    setTxHash('0x' + '0'.repeat(64)); // Start loading indicator
+    if (state.isWrongNetwork) {
+      toast({
+        variant: 'destructive',
+        title: 'Wrong Network',
+        description: 'Please switch to the Sonic network to claim your tokens.',
+      });
+      return;
+    }
+
+    setTxHash('0x' + '0'.repeat(64));
 
     try {
-      // 1. Get signature from the backend
       const sigResponse = await fetch('/api/get-claim-signature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -373,9 +411,8 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         throw new Error('Failed to get claim signature');
       }
 
-      // 2. Send transaction from the frontend
       const hash = await writeContractAsync({
-        chainId: 146, // Force the transaction to be on the Sonic network
+        chainId: sonicMainnet.id,
         address: contractAddress,
         abi: contractAbi,
         functionName: 'claim',
@@ -384,7 +421,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
       setTxHash(hash);
 
-      // 3. Update database after transaction is sent
       await fetch('/api/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -403,7 +439,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         title: 'Claim Failed',
         description: e.shortMessage || e.message,
       });
-      setTxHash(null); // Reset loading state on error
+      setTxHash(null);
     }
   };
 
@@ -411,7 +447,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ ...state, connectWallet, disconnectWallet, addClick, claimTokens, isClaiming }}
+      value={{ ...state, connectWallet, disconnectWallet, switchToSonicNetwork, addClick, claimTokens, isClaiming }}
     >
       {children}
     </UserContext.Provider>
