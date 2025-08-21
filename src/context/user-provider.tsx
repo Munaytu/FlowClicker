@@ -68,7 +68,10 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const { disconnect } = useDisconnect();
   const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
 
-  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ hash: txHash });
+  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ 
+    hash: txHash,
+    chainId: 146, // Explicitly check on Sonic network
+  });
 
   // Query for fetching the real-time claimable amount
   const { data: claimableData } = useQuery({
@@ -372,6 +375,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
       // 2. Send transaction from the frontend
       const hash = await writeContractAsync({
+        chainId: 146, // Force the transaction to be on the Sonic network
         address: contractAddress,
         abi: contractAbi,
         functionName: 'claim',
