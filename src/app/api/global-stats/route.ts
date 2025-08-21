@@ -61,14 +61,14 @@ async function getOnChainData(publicClient: any) {
     readContractCall('balanceOf', [burnAddress]),
   ]);
 
-  const totalFeeBps = (devFeeBps ?? 0n) + (foundationFeeBps ?? 0n) + (burnFeeBps ?? 0n);
-  const totalInitialSupply = totalSupply ?? 0n;
+  const totalFeeBps = (BigInt(devFeeBps ?? 0)) + (BigInt(foundationFeeBps ?? 0)) + (BigInt(burnFeeBps ?? 0));
+  const totalInitialSupply = BigInt(totalSupply ?? 0);
   
   // This is the supply that was NOT allocated to fees, i.e., what went to players
-  const circulatingSupply = totalInitialSupply - (devWalletBalance ?? 0n) - (foundationWalletBalance ?? 0n) - (burnWalletBalance ?? 0n);
+  const circulatingSupply = totalInitialSupply - (BigInt(devWalletBalance ?? 0)) - (BigInt(foundationWalletBalance ?? 0)) - (BigInt(burnWalletBalance ?? 0));
 
   console.log({ 
-    totalSupply: formatUnits(totalInitialSupply, decimals),
+    totalSupply: formatUnits(totalInitialSupply, decimals as number),
     totalClaimed: formatUnits(circulatingSupply, decimals),
   });
 

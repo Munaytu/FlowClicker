@@ -54,16 +54,16 @@ export async function POST(request: Request) {
     ]);
 
     const clicksBigInt = BigInt(clicks);
-    const claimableAmount = clicksBigInt * (currentReward ?? 0n);
+    const claimableAmount = clicksBigInt * (currentReward as bigint ?? 0n);
 
     return NextResponse.json({
-      claimableAmount: formatUnits(claimableAmount, decimals ?? 18),
-      currentRewardPerClick: formatUnits(currentReward ?? 0n, decimals ?? 18),
+      claimableAmount: formatUnits(claimableAmount, (decimals as number) ?? 18),
+      currentRewardPerClick: formatUnits((currentReward as bigint) ?? 0n, (decimals as number) ?? 18),
       decay: {
-        initialReward: formatUnits(initialReward ?? 0n, decimals ?? 18),
-        finalReward: formatUnits(finalReward ?? 0n, decimals ?? 18),
-        decayDurationInDays: Number(decayDuration ?? 0n) / 86400,
-        launchTimestamp: Number(launchTime ?? 0n),
+        initialReward: formatUnits((initialReward as bigint) ?? 0n, (decimals as number) ?? 18),
+        finalReward: formatUnits((finalReward as bigint) ?? 0n, (decimals as number) ?? 18),
+        decayDurationInDays: Number((decayDuration as bigint) ?? 0n) / 86400,
+        launchTimestamp: Number((launchTime as bigint) ?? 0n),
       },
     });
 
