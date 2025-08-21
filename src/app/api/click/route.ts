@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const ratelimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(10, '10 s'), // 10 requests per 10 seconds
+  limiter: Ratelimit.tokenBucket(50, "1s", 25), // Burst of 50, refills 25 per second.
   analytics: true,
   prefix: '@upstash/ratelimit',
 });

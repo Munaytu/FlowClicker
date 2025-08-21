@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
     await redis.set(userClicksKey, 0);
 
-    const secret = new TextEncoder().encode(jwtSecret);
+    const secret = new TextEncoder().encode(jwtSecret as string);
     const token = await new jose.SignJWT({ player, clicks })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
