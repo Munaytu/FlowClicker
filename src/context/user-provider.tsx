@@ -2,7 +2,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId } from 'wagmi';
 import { config, rabbykit } from '@/lib/wagmi';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { readContract } from '@wagmi/core';
@@ -64,6 +64,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const { disconnect } = useDisconnect();
   const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
 
@@ -170,11 +171,11 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     if (isConnected && address) {
       const userId = address;
       setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId }));
-      fetchUserData(userId);
+      fetchUserData(userId, chainId);
     } else {
       setState(initialState);
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, chainId]);
 
   // Effect to handle the result of the transaction confirmation
   useEffect(() => {
@@ -220,39 +221,41 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     }
   }, [isConfirmed, receipt, claimError, receiptError, txHash, state.pendingClicks, toast, reset]);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, chainId: number) => {
     const { data, error } = await supabase
       .from('users')
       .select('total_claimed, total_clicks, claimed_clicks')
       .eq('id', userId)
       .single();
 
-    // Reconciliation logic starts here
-    try {
-        const balance = await readContract(config, {
-            abi: contractAbi,
-            address: contractAddress,
-            functionName: 'balanceOf',
-            args: [userId as `0x${string}`],
-        });
+    // Reconciliation logic starts here, only run on Sonic chain (id: 146)
+    if (chainId === 146) {
+        try {
+            const balance = await readContract(config, {
+                abi: contractAbi,
+                address: contractAddress,
+                functionName: 'balanceOf',
+                args: [userId as `0x${string}`],
+            });
 
-        const decimals = await readContract(config, {
-            abi: contractAbi,
-            address: contractAddress,
-            functionName: 'decimals',
-        });
+            const decimals = await readContract(config, {
+                abi: contractAbi,
+                address: contractAddress,
+                functionName: 'decimals',
+            });
 
-        const balanceInUnits = Number(balance) / (10 ** Number(decimals));
+            const balanceInUnits = Number(balance) / (10 ** Number(decimals));
 
-        if (data && balanceInUnits !== data.total_claimed) {
-            console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
-            // Here you would call an API to update your DB
-            // For now, we just update the state
-            setState(s => ({...s, totalClaimed: balanceInUnits}));
+            if (data && balanceInUnits !== data.total_claimed) {
+                console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
+                // Here you would call an API to update your DB
+                // For now, we just update the state
+                setState(s => ({...s, totalClaimed: balanceInUnits}));
+            }
+
+        } catch (e) {
+            console.error("Could not fetch balance for reconciliation", e);
         }
-
-    } catch (e) {
-        console.error("Could not fetch balance for reconciliation", e);
     }
 
     if (error && error.code === 'PGRST116') {
