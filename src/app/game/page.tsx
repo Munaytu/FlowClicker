@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Coins, Gift, Hand, HelpCircle, Loader2, TrendingDown, Zap } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -30,16 +31,21 @@ export default function GamePage() {
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="flex flex-col items-center justify-center space-y-4">
-            <button
+            <motion.button
               onClick={addClick}
               disabled={!isConnected}
-              className="group relative h-64 w-64 rounded-full border-8 border-primary bg-primary/10 transition-transform duration-150 ease-in-out active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative h-64 w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Click to earn"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/20 transition-colors group-hover:bg-primary/30">
-                <Hand className="h-24 w-24 text-primary transition-transform group-hover:scale-110" />
+                <motion.div whileHover={{ scale: 1.1 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+                  <Hand className="h-24 w-24 text-primary" />
+                </motion.div>
               </div>
-            </button>
+            </motion.button>
             {!isConnected && (
               <p className="text-sm text-destructive">Connect wallet to play!</p>
             )}
@@ -90,12 +96,33 @@ export default function GamePage() {
             disabled={pendingClicks <= 0 || !isConnected || isClaiming}
             variant="default"
           >
-            {isClaiming ? (
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-              <Gift className="mr-2 h-5 w-5" />
-            )}
-            {isClaiming ? 'CLAIMING...' : 'CLAIM TOKENS'}
+            <AnimatePresence mode="wait" initial={false}>
+              {isClaiming ? (
+                <motion.span
+                  key="claiming"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-center"
+                >
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  CLAIMING...
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="claim"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-center"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  CLAIM TOKENS
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Button>
         </CardContent>
       </Card>

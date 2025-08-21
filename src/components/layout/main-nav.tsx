@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const navItems = [
   { href: '/game', label: 'Game' },
@@ -21,11 +22,17 @@ export function MainNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              'transition-colors hover:text-foreground/80',
+              'relative transition-colors hover:text-foreground/80',
               pathname === item.href ? 'text-foreground' : 'text-foreground/60'
             )}
           >
             {item.label}
+            {pathname === item.href && (
+              <motion.span
+                layoutId="underline"
+                className="absolute left-0 top-full block h-[2px] w-full bg-primary"
+              />
+            )}
           </Link>
         ))}
       </nav>
