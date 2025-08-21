@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     if (rpcError) {
       console.error('Error calling increment_clicks function:', rpcError);
       await redis.decr(`user:${userId}:clicks`);
-      return new NextResponse('Internal Server Error from Supabase RPC', { status: 500 });
+      const errorMessage = process.env.NODE_ENV !== 'production' ? rpcError.message : 'Internal Server Error from Supabase RPC';
+      return new NextResponse(errorMessage, { status: 500 });
     }
 
     return NextResponse.json({ clicks: newClicks });
