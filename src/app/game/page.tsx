@@ -3,10 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
-import { Coins, Gift, Hand, Zap } from 'lucide-react';
+import { Coins, Gift, Hand, Loader2, Zap } from 'lucide-react';
 
 export default function GamePage() {
-  const { pendingClicks, addClick, claimTokens, isConnected } = useUser();
+  const { pendingClicks, addClick, claimTokens, isConnected, isClaiming } = useUser();
 
   return (
     <div className="container flex flex-col items-center justify-center py-10">
@@ -53,11 +53,15 @@ export default function GamePage() {
             size="lg"
             className="w-full text-lg font-bold"
             onClick={claimTokens}
-            disabled={pendingClicks <= 0 || !isConnected}
+            disabled={pendingClicks <= 0 || !isConnected || isClaiming}
             variant="default"
           >
-            <Gift className="mr-2 h-5 w-5" />
-            CLAIM TOKENS
+            {isClaiming ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Gift className="mr-2 h-5 w-5" />
+            )}
+            {isClaiming ? 'CLAIMING...' : 'CLAIM TOKENS'}
           </Button>
         </CardContent>
       </Card>

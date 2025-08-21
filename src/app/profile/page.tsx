@@ -3,11 +3,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
-import { BarChart, Gem, Gift, Hand, Hourglass, MapPin, User as UserIcon } from 'lucide-react';
+import { BarChart, Gem, Gift, Hand, Hourglass, MapPin, User as UserIcon, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { countryCodeToData } from '@/lib/countries';
+import { useBalance } from 'wagmi';
+import { contractAddress } from '@/lib/contract-config';
 
 export default function ProfilePage() {
   const { 
@@ -16,12 +18,17 @@ export default function ProfilePage() {
     totalClicks, 
     totalClaimed, 
     pendingClicks, 
-    claimTokens 
+    claimTokens,
+    walletAddress
   } = useUser();
   const router = useRouter();
   const [countryRank, setCountryRank] = useState(0);
   const [countryClicks, setCountryClicks] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const { data: balance } = useBalance({
+    address: walletAddress!,
+  });
 
   useEffect(() => {
     if (!isConnected) {
@@ -67,6 +74,7 @@ export default function ProfilePage() {
         </h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={Wallet} title="My Wallet Ballance" value={`${Number(balance?.formatted).toFixed(4)} ${balance?.symbol}`} />
             <StatCard icon={MapPin} title="Your Country" value={`${countryFlag} ${countryName}`} />
             <StatCard icon={Hand} title="Total Clicks" value={totalClicks.toLocaleString()} />
             <StatCard icon={Gem} title="FLOW Claimed" value={totalClaimed.toLocaleString()} />

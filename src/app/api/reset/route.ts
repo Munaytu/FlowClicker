@@ -23,14 +23,19 @@ export async function POST(req: NextRequest) {
     } while (cursor !== 0);
 
     // Reset Supabase
-    const { error } = await supabase
+    console.log("Attempting to reset Supabase...");
+    const { data, error } = await supabase
       .from('users')
       .update({ total_clicks: 0, total_claimed: 0 })
-      .neq('id', '0x0');
+      .neq('id', '0x0') // Update all rows
+      .select(); // select() will return the updated rows
 
     if (error) {
+      console.error("Supabase reset failed:", JSON.stringify(error, null, 2));
       throw error;
     }
+
+    console.log("Supabase reset successful. Updated rows:", data);
 
     return NextResponse.json({ message: 'Data reset successfully' });
   } catch (error) {

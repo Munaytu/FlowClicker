@@ -1,46 +1,52 @@
-'use client';
-
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { WagmiProvider, useAccount, useDisconnect } from 'wagmi';
+import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { config, rabbykit } from '@/lib/wagmi';
+import { contractAbi, contractAddress } from '@/lib/contract-config';
+import { readContract } from '@wagmi/core';
 
+// ... (interfaces and context definition remain the same)
 interface UserState {
-  userId: string | null;
-  walletAddress: string | null;
-  isConnected: boolean;
-  pendingClicks: number;
-  totalClicks: number;
-  totalClaimed: number;
-  country: string;
-}
-
-interface UserContextType extends UserState {
-  connectWallet: () => void;
-  disconnectWallet: () => void;
-  addClick: () => void;
-  claimTokens: () => void;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-const initialState: UserState = {
-  userId: null,
-  walletAddress: null,
-  isConnected: false,
-  pendingClicks: 0,
-  totalClicks: 0,
-  totalClaimed: 0,
-  country: 'BO', // Default to Bolivia as per mock
-};
+    userId: string | null;
+    walletAddress: `0x${string}` | null;
+    isConnected: boolean;
+    pendingClicks: number;
+    totalClicks: number;
+    totalClaimed: number;
+    country: string;
+  }
+  
+  interface UserContextType extends UserState {
+    connectWallet: () => void;
+    disconnectWallet: () => void;
+    addClick: () => void;
+    claimTokens: () => void;
+    isClaiming: boolean;
+  }
+  
+  const UserContext = createContext<UserContextType | undefined>(undefined);
+  
+  const initialState: UserState = {
+    userId: null,
+    walletAddress: null,
+    isConnected: false,
+    pendingClicks: 0,
+    totalClicks: 0,
+    totalClaimed: 0,
+    country: 'BO', // Default to Bolivia as per mock
+  };
 
 function UserProviderContent({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UserState>(initialState);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
+
+  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
     // Fetch country from a geo IP API on initial load
@@ -55,7 +61,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isConnected && address) {
-      const userId = address; // Or a more sophisticated way to get a user ID
+      const userId = address;
       setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId }));
       fetchUserData(userId);
     } else {
@@ -63,12 +69,76 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address]);
 
+  // Effect to handle the result of the transaction confirmation
+  useEffect(() => {
+    if (isConfirmed && receipt) {
+        toast({
+            title: '🎉 Tokens Claimed!',
+            description: `Your transaction was successful.`,
+            action: (
+                <a href={`https://sonicscan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    View on SonicScan
+                </a>
+            )
+        });
+
+        const claimedAmount = state.pendingClicks;
+
+        // The backend now handles the database update.
+        // We just update the local state.
+        setState((s) => ({
+            ...s,
+            totalClaimed: s.totalClaimed + claimedAmount,
+            pendingClicks: 0,
+        }));
+        setTxHash(null);
+        reset();
+    }
+    if (claimError || receiptError) {
+        toast({
+            variant: 'destructive',
+            title: 'Transaction Failed',
+            description: (claimError?.shortMessage || receiptError?.shortMessage) || 'Could not claim tokens.',
+        });
+        setTxHash(null);
+        reset();
+    }
+  }, [isConfirmed, receipt, claimError, receiptError, txHash, state.pendingClicks, toast, reset]);
+
   const fetchUserData = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
       .select('total_claimed, total_clicks')
       .eq('id', userId)
       .single();
+
+    // Reconciliation logic starts here
+    try {
+        const balance = await readContract(config, {
+            abi: contractAbi,
+            address: contractAddress,
+            functionName: 'balanceOf',
+            args: [userId as `0x${string}`],
+        });
+
+        const decimals = await readContract(config, {
+            abi: contractAbi,
+            address: contractAddress,
+            functionName: 'decimals',
+        });
+
+        const balanceInUnits = Number(balance) / (10 ** Number(decimals));
+
+        if (data && balanceInUnits !== data.total_claimed) {
+            console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
+            // Here you would call an API to update your DB
+            // For now, we just update the state
+            setState(s => ({...s, totalClaimed: balanceInUnits}));
+        }
+
+    } catch (e) {
+        console.error("Could not fetch balance for reconciliation", e);
+    }
 
     if (error && error.code === 'PGRST116') {
       // User does not exist, create one
@@ -100,10 +170,12 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         description: 'Could not fetch your data.',
       });
     } else if (data) {
+      const pending = data.total_clicks - data.total_claimed;
       setState((s) => ({
         ...s,
         totalClicks: data.total_clicks,
         totalClaimed: data.total_claimed,
+        pendingClicks: pending > 0 ? pending : 0,
       }));
     }
   };
@@ -126,73 +198,91 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       return;
     }
 
-    const response = await fetch('/api/click', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId: state.userId, country: state.country }),
-    });
+    setState((s) => ({
+      ...s,
+      pendingClicks: s.pendingClicks + 1,
+      totalClicks: s.totalClicks + 1,
+    }));
 
-    const data = await response.json();
+    try {
+      const response = await fetch('/api/click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: state.userId, country: state.country }),
+      });
 
-    if (response.ok) {
+      if (!response.ok) throw new Error('Failed to save click');
+
+    } catch (error) {
+      console.error('Error saving click:', error);
       setState((s) => ({
         ...s,
-        pendingClicks: data.clicks,
-        totalClicks: s.totalClicks + 1,
+        pendingClicks: s.pendingClicks - 1,
+        totalClicks: s.totalClicks - 1,
       }));
-    } else {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not register click.',
+        description: 'Could not save your click. Please try again.',
       });
     }
   };
 
   const claimTokens = async () => {
-    if (state.pendingClicks <= 0 || !state.userId) {
-      toast({
-        variant: 'destructive',
-        title: 'No Clicks to Claim',
-        description: 'Accumulate some clicks first!',
-      });
+    if (state.pendingClicks <= 0 || !state.walletAddress) {
+      toast({ title: 'No Clicks to Claim' });
       return;
     }
 
-    const response = await fetch('/api/claim', {
+    setTxHash('0x' + '0'.repeat(64)); // Start loading indicator
+
+    try {
+      // 1. Get signature from the backend
+      const sigResponse = await fetch('/api/get-claim-signature', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: state.userId }),
-    });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: state.walletAddress, clicks: state.pendingClicks }),
+      });
 
-    const data = await response.json();
+      const { signature, nonce } = await sigResponse.json();
 
-    if (response.ok) {
-        setState((s) => ({
-            ...s,
-            pendingClicks: 0,
-            totalClaimed: s.totalClaimed + data.claimed,
-        }));
-        toast({
-            title: '🎉 Tokens Claimed!',
-            description: `You have successfully claimed ${data.claimed} FLOW tokens.`,
-        });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not claim tokens.',
-        });
+      if (!sigResponse.ok) {
+        throw new Error('Failed to get claim signature');
+      }
+
+      // 2. Send transaction from the frontend
+      const hash = await writeContractAsync({
+        address: contractAddress,
+        abi: contractAbi,
+        functionName: 'claim',
+        args: [state.walletAddress, BigInt(state.pendingClicks), signature],
+      });
+
+      setTxHash(hash);
+
+      // 3. Update database after transaction is sent
+      await fetch('/api/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player: state.walletAddress, clicks: state.pendingClicks, txHash: hash }),
+      });
+
+    } catch (e: any) {
+      console.error("Claim failed", e);
+      toast({
+        variant: 'destructive',
+        title: 'Claim Failed',
+        description: e.shortMessage || e.message,
+      });
+      setTxHash(null); // Reset loading state on error
     }
   };
 
+  const isClaiming = isClaimingC || isConfirming;
+
   return (
     <UserContext.Provider
-      value={{ ...state, connectWallet, disconnectWallet, addClick, claimTokens }}
+      value={{ ...state, connectWallet, disconnectWallet, addClick, claimTokens, isClaiming }}
     >
       {children}
     </UserContext.Provider>

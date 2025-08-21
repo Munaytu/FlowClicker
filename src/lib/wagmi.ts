@@ -3,7 +3,7 @@ import { createModal, getDefaultConfig } from "@rabby-wallet/rabbykit";
 import { createConfig, http } from "@wagmi/core";
 import { mainnet, arbitrum, bsc, optimism, polygon } from "@wagmi/core/chains";
 
-const sonicTestnet = {
+const sonic = {
     id: 146,
     name: 'Sonic',
     network: 'sonic',
@@ -15,16 +15,16 @@ const sonicTestnet = {
     blockExplorers: {
         default: { name: 'SonicScan', url: 'https://sonicscan.org' },
     },
-    testnet: true,
+    testnet: false,
 };
 
 export const config = createConfig(
   getDefaultConfig({
     appName: "FlowClicker",
     projectId: "58a22d2bc1c793fc31c117ad9ceba8d9", // Please replace with your own project ID
-    chains: [sonicTestnet, mainnet, arbitrum, bsc, optimism, polygon],
+    chains: [sonic, mainnet, arbitrum, bsc, optimism, polygon],
     transports: {
-      [sonicTestnet.id]: http(),
+      [sonic.id]: http(),
       [mainnet.id]: http(),
       [arbitrum.id]: http(),
       [bsc.id]: http(),
