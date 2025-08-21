@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 export const navItems = [
   { href: '/game', label: 'Game' },
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/tokenomics', label: 'Tokenomics' },
   { href: '/profile', label: 'Profile' },
 ];
 

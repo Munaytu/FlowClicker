@@ -6,6 +6,7 @@ import { useUser } from '@/context/user-provider';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Coins, Gift, Hand, HelpCircle, Loader2, TrendingDown, Zap } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { PulseIcon } from '@/components/ui/pulse-icon';
 
 export default function GamePage() {
   const { 
@@ -41,9 +42,7 @@ export default function GamePage() {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/20 transition-colors group-hover:bg-primary/30">
-                <motion.div whileHover={{ scale: 1.1 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-                  <Hand className="h-20 w-20 md:h-24 md:w-24 text-primary" />
-                </motion.div>
+                <PulseIcon />
               </div>
             </motion.button>
             {!isConnected && (
