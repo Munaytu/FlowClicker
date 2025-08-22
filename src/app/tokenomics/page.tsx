@@ -20,11 +20,11 @@ export default function TokenomicsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p>The total supply of tokens is fixed. When tokens are claimed, a small fee is distributed to support the project's growth and sustainability. Here is the breakdown:</p>
+            <p>The total supply of tokens is fixed. When tokens are claimed, a small fee is distributed to support the project&apos;s growth and sustainability. Here is the breakdown:</p>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
               <li><span className="font-medium text-foreground">Developer Fund (10%):</span> To support ongoing development and new features.</li>
               <li><span className="font-medium text-foreground">Foundation (5%):</span> For marketing, partnerships, and community grants.</li>
-              <li><span className="font-medium text-foreground">Burn (5%):</span> A portion of tokens are permanently removed from circulation (burned), which can help stabilize the token's value.</li>
+              <li><span className="font-medium text-foreground">Burn (5%):</span> A portion of tokens are permanently removed from circulation (burned), which can help stabilize the token&apos;s value.</li>
             </ul>
           </CardContent>
         </Card>
@@ -39,7 +39,7 @@ export default function TokenomicsPage() {
           <CardContent className="space-y-4">
             <p><span className="font-bold">1. Click:</span> Play the game and click the button. Each click is recorded on our server.</p>
             <p><span className="font-bold">2. Earn:</span> For every click you make, you generate a proportional amount of claimable tokens. The more you click, the more you can claim.</p>
-            <p><span className="font-bold">3. Claim:</span> When you're ready, you can claim your earned tokens. This is a transaction on the blockchain that will send the tokens to your wallet. You will need a small amount of the native currency (Sonic) to pay for the transaction fee (gas).</p>
+            <p><span className="font-bold">3. Claim:</span> When you&apos;re ready, you can claim your earned tokens. This is a transaction on the blockchain that will send the tokens to your wallet. You will need a small amount of the native currency (Sonic) to pay for the transaction fee (gas).</p>
           </CardContent>
         </Card>
 
@@ -47,7 +47,7 @@ export default function TokenomicsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-6 w-6" />
-              Beginner's Guide: Getting a Wallet
+              Beginner&apos;s Guide: Getting a Wallet
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

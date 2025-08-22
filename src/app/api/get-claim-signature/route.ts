@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const { player } = validation.data;
 
     const userClicksKey = `user:${player}:clicks`;
-    const clicksStr = await redis.get(userClicksKey);
+    const clicksStr = await redis.get<string | null>(userClicksKey);
     const clicks = parseInt(clicksStr || "0", 10);
 
     if (clicks === 0) {
