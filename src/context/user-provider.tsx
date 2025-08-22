@@ -333,12 +333,17 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   };
 
   const addClick = async () => {
-    if (!state.isConnected || !state.userId || state.isWrongNetwork) {
+    if (!state.isConnected || !state.userId) {
       toast({
         variant: 'destructive',
-        title: state.isWrongNetwork ? 'Wrong Network' : 'Not Connected',
-        description: state.isWrongNetwork ? 'Please switch to the Sonic network to play.' : 'Please connect your wallet to start clicking.',
+        title: 'Not Connected',
+        description: 'Please connect your wallet to start clicking.',
       });
+      return;
+    }
+
+    if (state.isWrongNetwork) {
+      switchToSonicNetwork();
       return;
     }
 
@@ -388,11 +393,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     }
 
     if (state.isWrongNetwork) {
-      toast({
-        variant: 'destructive',
-        title: 'Wrong Network',
-        description: 'Please switch to the Sonic network to claim your tokens.',
-      });
+      switchToSonicNetwork();
       return;
     }
 
