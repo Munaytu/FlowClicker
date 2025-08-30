@@ -84,10 +84,10 @@ const TokenomicsPage = () => {
                     <strong>This is the only step that requires a "gas" fee.</strong>
                   </p>
                   <div>
-                    <h4 className="font-bold">Tools You'll Need:</h4>
+                    <h4 className="font-bold">Tools You&apos;ll Need:</h4>
                     <ul className="list-disc list-inside mt-2 space-y-2">
                       <li>
-                        <strong>A Digital Wallet:</strong> It's an app like{" "}
+                        <strong>A Digital Wallet:</strong> It&apos;s an app like{" "}
                         <a
                           href="https://metamask.io"
                           target="_blank"
@@ -133,8 +133,8 @@ const TokenomicsPage = () => {
                       </li>
                       <li>
                         <strong>Gas for the Transaction:</strong> To pay the
-                        network fee, you need a small amount of Sonic's native
-                        token, called <strong>'S'</strong>. You must acquire 'S'
+                        network fee, you need a small amount of Sonic&apos;s native
+                        token, called <strong>&apos;S&apos;</strong>. You must acquire &apos;S&apos;
                         through a "Bridge" (from another blockchain) or an
                         "Exchange" that supports it. Check the official Sonic
                         channels for this information.
@@ -158,7 +158,7 @@ const TokenomicsPage = () => {
           </Header>
           <CardContent className="space-y-6">
             <h3 className="text-xl font-semibold">
-              $FLOW Creation: The Players' Factory
+              $FLOW Creation: The Players&apos; Factory
             </h3>
             <p>
               The supply of $FLOW starts at ZERO. The tokens do not exist
@@ -208,7 +208,7 @@ const TokenomicsPage = () => {
                 </AccordionTrigger>
                 <AccordionContent className="text-base space-y-4">
                   <p>
-                    Imagine the game's bonus rewards as a giant block of ice that melts over exactly <strong>3 years</strong>.
+                    Imagine the game&apos;s bonus rewards as a giant block of ice that melts over exactly <strong>3 years</strong>.
                   </p>
                   <ul className="list-disc list-inside space-y-2">
                     <li>
@@ -222,7 +222,7 @@ const TokenomicsPage = () => {
                     </li>
                   </ul>
                   <p className="font-semibold text-primary">
-                    This system is fair and transparent. It's designed to heavily reward the earliest players while ensuring the game remains viable and rewarding for years to come.
+                    This system is fair and transparent. It&apos;s designed to heavily reward the earliest players while ensuring the game remains viable and rewarding for years to come.
                   </p>
                 </AccordionContent>
               </AccordionItem>
