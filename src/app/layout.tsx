@@ -39,6 +39,7 @@ export const metadata: Metadata = {
     title: "FlowClicker - The Ultimate Crypto Clicker Game",
     description: "Join the clicker revolution! Earn real $FLOW tokens on the Sonic Mainnet.",
     images: ["/og-image.png"], // Make sure to create this image
+  },
 
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },

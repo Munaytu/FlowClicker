@@ -161,7 +161,7 @@ const TokenomicsPage = () => {
             <CardDescription>
               Where does $FLOW come from and why could it have value?
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-6">
             <h3 className="text-xl font-semibold">
               $FLOW Creation: The Players' Factory
@@ -205,7 +205,7 @@ const TokenomicsPage = () => {
             <CardDescription>
               This section details the definitive economic mechanism of the <code>FlowClicker.sol</code> smart contract.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-6">
             <Accordion type="single" collapsible className="w-full">
                <AccordionItem value="item-1">

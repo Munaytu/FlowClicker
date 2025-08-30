@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-foreground p-4 text-center animate-fade-in">
+    <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center bg-background text-foreground p-4 text-center animate-fade-in">
       <div className="max-w-2xl">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-primary">
           FlowClicker
