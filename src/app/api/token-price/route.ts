@@ -98,7 +98,7 @@ export async function GET() {
       address: PYTH_CONTRACT_ADDRESS,
       abi: pythAbi,
       functionName: 'getPriceNoOlderThan',
-      args: [SONIC_PRICE_ID, 60]
+      args: [SONIC_PRICE_ID, BigInt(60)]
     });
 
     const priceValue = Number(priceData.price);
