@@ -250,7 +250,7 @@ const TokenomicsPage = () => {
                   <h4 className="font-bold">The Linear Interpolation Algorithm:</h4>
                    <ol className="list-decimal list-inside space-y-2">
                     <li><strong>Calculate Elapsed Time:</strong> The contract gets the time since launch: <code>elapsed = block.timestamp - LAUNCH_TIME</code>.</li>
-                    <li><strong>Check if Decay Period is Over:</strong> If <code>elapsed >= DECAY_DURATION_SECONDS</code>, the function simply returns <code>FINAL_REWARD_PER_CLICK</code>.</li>
+                    <li><strong>Check if Decay Period is Over:</strong> If <code>{'elapsed >= DECAY_DURATION_SECONDS'}</code>, the function simply returns <code>FINAL_REWARD_PER_CLICK</code>.</li>
                     <li><strong>Calculate Total Reward Range:</strong> The total amount of reward that will decay over the 3 years is calculated: <code>rewardRange = INITIAL_REWARD_PER_CLICK - FINAL_REWARD_PER_CLICK</code>.</li>
                     <li><strong>Calculate Current Decay:</strong> The amount of reward that has decayed so far is found by calculating how far into the 3-year period we are: <code>decayedAmount = (rewardRange * elapsed) / DECAY_DURATION_SECONDS</code>.</li>
                     <li><strong>Determine Current Reward:</strong> The current reward is the starting reward minus the amount that has decayed: <code>currentReward = INITIAL_REWARD_PER_CLICK - decayedAmount</code>.</li>

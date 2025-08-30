@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const userClicksKey = `user:${player}:clicks`;
     const clicksStr = await redis.get(userClicksKey);
-    const clicks = parseInt(clicksStr || "0", 10);
+    const clicks = parseInt(String(clicksStr) || "0", 10);
 
     if (clicks === 0) {
       return NextResponse.json({ error: "No clicks to claim" }, { status: 400 });
