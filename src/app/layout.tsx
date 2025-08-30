@@ -14,31 +14,21 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://flow-clicker.vercel.app/"),
   title: {
-    default: "FlowClicker - The Addictive Crypto Clicker Game",
-    template: "%s | FlowClicker",
+    default: "FlowClicker - The Ultimate Crypto Clicker Game",
+    template: `%s | FlowClicker`,
   },
-  description:
-    "Join FlowClicker, the simple and addictive crypto clicker game. Click to earn tokens, compete on a global scale, and claim your rewards.",
-  keywords: [
-    "FlowClicker",
-    "crypto game",
-    "clicker game",
-    "blockchain game",
-    "earn crypto",
-    "play to earn",
-  ],
+  description: "Click to earn $FLOW tokens in the most exciting crypto clicker game on the web. Compete with players worldwide, claim your tokens on the blockchain, and become a crypto tycoon.",
+  keywords: ["crypto", "clicker", "game", "blockchain", "token", "earn", "play-to-earn", "FlowClicker", "Sonic", "Mainnet"],
   openGraph: {
-    title: "FlowClicker - The Addictive Crypto Clicker Game",
-    description:
-      "Click to earn tokens, compete on a global scale, and claim your rewards in FlowClicker.",
+    title: "FlowClicker - The Ultimate Crypto Clicker Game",
+    description: "Click, earn, and claim your crypto fortune!",
     url: "https://flow-clicker.vercel.app/",
     siteName: "FlowClicker",
     images: [
       {
-        url: "/og-image.png", // Must be an absolute URL
+        url: "/og-image.png", // Make sure to create this image
         width: 1200,
         height: 630,
-        alt: "FlowClicker Game",
       },
     ],
     locale: "en_US",
@@ -46,11 +36,14 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FlowClicker - The Addictive Crypto Clicker Game",
-    description:
-      "Click to earn tokens, compete on a global scale, and claim your rewards in FlowClicker.",
-    images: ["/og-image.png"], // Must be an absolute URL
+    title: "FlowClicker - The Ultimate Crypto Clicker Game",
+    description: "Join the clicker revolution! Earn real $FLOW tokens on the Sonic Mainnet.",
+    images: ["/og-image.png"], // Make sure to create this image
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 };
 
 export default function RootLayout({
