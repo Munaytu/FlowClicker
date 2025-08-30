@@ -155,7 +155,7 @@ const TokenomicsPage = () => {
             <CardDescription>
               Where does $FLOW come from and why could it have value?
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-6">
             <h3 className="text-xl font-semibold">
               $FLOW Creation: The Players&apos; Factory
