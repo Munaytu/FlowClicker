@@ -189,7 +189,7 @@ const TokenomicsPage = () => {
               </li>
             </ul>
           </CardContent>
-        </C>ard>
+        </Card>
 
         <Card>
           <CardHeader>
