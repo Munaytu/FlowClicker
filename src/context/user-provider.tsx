@@ -1,6 +1,6 @@
 import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId, useSwitchChain } from 'wagmi';
 import { config, rabbykit, sonicMainnet } from '@/lib/wagmi';
@@ -66,7 +66,7 @@ const initialState: UserState = {
 
 function UserProviderContent({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UserState>(initialState);
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -78,82 +78,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     hash: txHash,
     chainId: sonicMainnet.id,
   });
-
-  const fetchUserData = useCallback(async (userId: string, chainId: number) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('total_claimed, total_clicks, claimed_clicks')
-      .eq('id', userId)
-      .single();
-
-    if (chainId === sonicMainnet.id) {
-        try {
-            const balance = await readContract(config, {
-                abi: contractAbi,
-                address: contractAddress,
-                functionName: 'balanceOf',
-                args: [userId as `0x${string}`],
-            });
-
-            const decimals = await readContract(config, {
-                abi: contractAbi,
-                address: contractAddress,
-                functionName: 'decimals',
-            });
-
-            const balanceInUnits = Number(balance) / (10 ** Number(decimals));
-
-            if (data && balanceInUnits !== data.total_claimed) {
-                console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
-                setState(s => ({...s, totalClaimed: balanceInUnits}));
-            }
-
-        } catch (e) {
-            console.error("Could not fetch balance for reconciliation", e);
-        }
-    }
-
-    if (error && error.code === 'PGRST116') {
-      const { data: newUser, error: insertError } = await supabase
-        .from('users')
-        .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
-        .select('total_claimed, total_clicks, claimed_clicks')
-        .single();
-
-      if (insertError) {
-        console.error('Error creating user:', insertError);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not create a new user profile.',
-        });
-      } else if (newUser) {
-        setState((s) => ({
-          ...s,
-          totalClicks: newUser.total_clicks,
-          totalClaimed: newUser.total_claimed,
-          claimedClicks: newUser.claimed_clicks,
-        }));
-      }
-    } else if (error) {
-      console.error('Error fetching user data:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not fetch your data.',
-      });
-    } else if (data) {
-      const pending = data.total_clicks - data.claimed_clicks;
-      setState((s) => ({
-        ...s,
-        totalClicks: data.total_clicks,
-        totalClaimed: data.total_claimed,
-        claimedClicks: data.claimed_clicks,
-        pendingClicks: pending > 0 ? pending : 0,
-      }));
-    }
-    setState((s) => ({ ...s, isUserLoaded: true }));
-  }, [toast]);
 
   useEffect(() => {
     if (isConnected && chainId) {
@@ -269,7 +193,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     } else {
       setState(initialState);
     }
-  }, [isConnected, address, chainId, fetchUserData]);
+  }, [isConnected, address, chainId]);
 
   useEffect(() => {
     if (isConfirmed && receipt) {
@@ -298,19 +222,95 @@ function UserProviderContent({ children }: { children: ReactNode }) {
             pendingClicks: 0,
             claimableTokens: '0',
         }));
-        setTxHash(undefined);
+        setTxHash(null);
         reset();
     }
     if (claimError || receiptError) {
         toast({
             variant: 'destructive',
             title: 'Transaction Failed',
-            description: (claimError?.message || receiptError?.message) || 'Could not claim tokens.',
+            description: (claimError?.shortMessage || receiptError?.shortMessage) || 'Could not claim tokens.',
         });
-        setTxHash(undefined);
+        setTxHash(null);
         reset();
     }
-  }, [isConfirmed, receipt, claimError, receiptError, txHash, state.pendingClicks, toast, reset, state.claimableTokens]);
+  }, [isConfirmed, receipt, claimError, receiptError, txHash, state.pendingClicks, toast, reset]);
+
+  const fetchUserData = async (userId: string, chainId: number) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('total_claimed, total_clicks, claimed_clicks')
+      .eq('id', userId)
+      .single();
+
+    if (chainId === sonicMainnet.id) {
+        try {
+            const balance = await readContract(config, {
+                abi: contractAbi,
+                address: contractAddress,
+                functionName: 'balanceOf',
+                args: [userId as `0x${string}`],
+            });
+
+            const decimals = await readContract(config, {
+                abi: contractAbi,
+                address: contractAddress,
+                functionName: 'decimals',
+            });
+
+            const balanceInUnits = Number(balance) / (10 ** Number(decimals));
+
+            if (data && balanceInUnits !== data.total_claimed) {
+                console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
+                setState(s => ({...s, totalClaimed: balanceInUnits}));
+            }
+
+        } catch (e) {
+            console.error("Could not fetch balance for reconciliation", e);
+        }
+    }
+
+    if (error && error.code === 'PGRST116') {
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
+        .select('total_claimed, total_clicks, claimed_clicks')
+        .single();
+
+      if (insertError) {
+        console.error('Error creating user:', insertError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not create a new user profile.',
+        });
+      } else if (newUser) {
+        setState((s) => ({
+          ...s,
+          totalClicks: newUser.total_clicks,
+          totalClaimed: newUser.total_claimed,
+          claimedClicks: newUser.claimed_clicks,
+        }));
+      }
+    } else if (error) {
+      console.error('Error fetching user data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not fetch your data.',
+      });
+    } else if (data) {
+      const pending = data.total_clicks - data.claimed_clicks;
+      setState((s) => ({
+        ...s,
+        totalClicks: data.total_clicks,
+        totalClaimed: data.total_claimed,
+        claimedClicks: data.claimed_clicks,
+        pendingClicks: pending > 0 ? pending : 0,
+      }));
+    }
+    setState((s) => ({ ...s, isUserLoaded: true }));
+  };
 
   const connectWallet = () => {
     rabbykit.open();
@@ -397,7 +397,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       return;
     }
 
-    setTxHash(('0x' + '0'.repeat(64)) as `0x${string}`);
+    setTxHash('0x' + '0'.repeat(64));
 
     try {
       const sigResponse = await fetch('/api/get-claim-signature', {
@@ -440,7 +440,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         title: 'Claim Failed',
         description: e.shortMessage || e.message,
       });
-      setTxHash(undefined);
+      setTxHash(null);
     }
   };
 
