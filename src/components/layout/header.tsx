@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { ChevronDown, Menu, Wallet, Zap } from 'lucide-react';
+import { ChevronDown, Menu, Wallet } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -61,7 +61,7 @@ export function Header() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" />
+          <img src="/logo.svg" alt="FlowClicker Logo" className="h-6 w-6 text-primary" />
           <Link href="/game" className="font-bold text-xl">
             FlowClicker
           </Link>
