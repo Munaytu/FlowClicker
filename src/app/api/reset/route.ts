@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       if (keys.length > 0) {
         await redis.del(...keys);
       }
-      cursor = parseInt(nextCursor, 10);
+      cursor = nextCursor;
     } while (cursor !== 0);
 
     // Reset Supabase
