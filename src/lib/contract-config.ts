@@ -1,4 +1,4 @@
-export const contractAddress = '0xa2989aFce34F5D126858a39BA9409aDc115906A8';
+export const contractAddress = '0x404E7Ede0Bbc428217E8B04011c0A72F4cB74a7F';
 export const contractAbi = [
     {
       "inputs": [
@@ -794,6 +794,13 @@ export const contractAbi = [
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "registerMe",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
