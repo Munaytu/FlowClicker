@@ -1,5 +1,4 @@
-"use client";
-
+import { Metadata } from "next";
 import {
   Card,
   CardContent,
@@ -13,17 +12,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { useSwitchChain } from "wagmi";
-import { config, sonicMainnet } from "@/lib/wagmi";
+
+export const metadata: Metadata = {
+  title: "Tokenomics - How FlowClicker Works",
+  description:
+    "Learn about the tokenomics of FlowClicker. Understand how clicks turn into crypto, the $FLOW token creation process, and the linear decay emission model.",
+  openGraph: {
+    title: "Tokenomics - How FlowClicker Works",
+    description:
+      "Deep dive into the economy of FlowClicker. Learn how your clicks create value.",
+  },
+  twitter: {
+    title: "Tokenomics - How FlowClicker Works",
+    description:
+      "Deep dive into the economy of FlowClicker. Learn how your clicks create value.",
+  },
+};
 
 const TokenomicsPage = () => {
-  const { switchChain } = useSwitchChain({ config });
-
-  const handleSwitchNetwork = () => {
-    switchChain({ chainId: sonicMainnet.id });
-  };
-
   return (
     <div className="container mx-auto p-4 md:p-8">
       <header className="text-center mb-12">
@@ -64,7 +70,7 @@ const TokenomicsPage = () => {
                   <p>
                     When you click in the game, your balance of claimable $FLOW
                     increases. This action is <strong>free</strong>. It is not a
-                    blockchain transaction, so it does not cost "gas" and is
+                    blockchain transaction, so it does not cost &quot;gas&quot; and is
                     instantaneous. You are accumulating your future reward on our
                     servers, competing against other players and countries in
                     real-time.
@@ -78,10 +84,10 @@ const TokenomicsPage = () => {
                 <AccordionContent className="text-base space-y-4">
                   <p>
                     When you decide you have accumulated enough tokens, you can
-                    "Claim" them. This is the moment you interact with the
+                    &quot;Claim&quot; them. This is the moment you interact with the
                     blockchain to transfer the $FLOW from our system to your
                     personal wallet.{" "}
-                    <strong>This is the only step that requires a "gas" fee.</strong>
+                    <strong>This is the only step that requires a &quot;gas&quot; fee.</strong>
                   </p>
                   <div>
                     <h4 className="font-bold">Tools You&apos;ll Need:</h4>
@@ -108,7 +114,7 @@ const TokenomicsPage = () => {
                         . It acts as your personal vault and your identity in the
                         crypto world. Remember:{" "}
                         <strong>
-                          NEVER share your 12-word "seed phrase".
+                          NEVER share your 12-word &quot;seed phrase&quot;.
                         </strong>
                       </li>
                       <li>
@@ -116,9 +122,9 @@ const TokenomicsPage = () => {
                         <strong>Sonic Mainnet</strong>. Your wallet must be
                         connected to this network to be able to claim.
                         <div className="my-3">
-                          <Button onClick={handleSwitchNetwork}>
-                            Add/Switch to Sonic Mainnet
-                          </Button>
+                          <p className="text-sm text-muted-foreground">
+                            You can add the network in your wallet settings.
+                          </p>
                         </div>
                         <details className="text-sm text-muted-foreground">
                           <summary>Or add it manually</summary>
@@ -135,8 +141,8 @@ const TokenomicsPage = () => {
                         <strong>Gas for the Transaction:</strong> To pay the
                         network fee, you need a small amount of Sonic&apos;s native
                         token, called <strong>&apos;S&apos;</strong>. You must acquire &apos;S&apos;
-                        through a "Bridge" (from another blockchain) or an
-                        "Exchange" that supports it. Check the official Sonic
+                        through a &quot;Bridge&quot; (from another blockchain) or an
+                        &quot;Exchange&quot; that supports it. Check the official Sonic
                         channels for this information.
                       </li>
                     </ul>
@@ -155,7 +161,7 @@ const TokenomicsPage = () => {
             <CardDescription>
               Where does $FLOW come from and why could it have value?
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-6">
             <h3 className="text-xl font-semibold">
               $FLOW Creation: The Players&apos; Factory
@@ -163,8 +169,8 @@ const TokenomicsPage = () => {
             <p>
               The supply of $FLOW starts at ZERO. The tokens do not exist
               until a player claims them. The FlowClicker smart contract acts
-              like a machine that <strong>"mints"</strong> (creates) new
-              tokens the very instant a player executes a "Claim" transaction.
+              like a machine that <strong>&quot;mints&quot;</strong> (creates) new
+              tokens the very instant a player executes a &quot;Claim&quot; transaction.
               The power to create the currency is, literally, in the hands of
               the community.
             </p>
@@ -244,7 +250,7 @@ const TokenomicsPage = () => {
                   <h4 className="font-bold">The Linear Interpolation Algorithm:</h4>
                    <ol className="list-decimal list-inside space-y-2">
                     <li><strong>Calculate Elapsed Time:</strong> The contract gets the time since launch: <code>elapsed = block.timestamp - LAUNCH_TIME</code>.</li>
-                    <li><strong>Check if Decay Period is Over:</strong> If <code>elapsed >= DECAY_DURATION_SECONDS</code>, the function simply returns <code>FINAL_REWARD_PER_CLICK</code>.</li>
+                    <li><strong>Check if Decay Period is Over:</strong> If <code>elapsed {'>'}= DECAY_DURATION_SECONDS</code>, the function simply returns <code>FINAL_REWARD_PER_CLICK</code>.</li>
                     <li><strong>Calculate Total Reward Range:</strong> The total amount of reward that will decay over the 3 years is calculated: <code>rewardRange = INITIAL_REWARD_PER_CLICK - FINAL_REWARD_PER_CLICK</code>.</li>
                     <li><strong>Calculate Current Decay:</strong> The amount of reward that has decayed so far is found by calculating how far into the 3-year period we are: <code>decayedAmount = (rewardRange * elapsed) / DECAY_DURATION_SECONDS</code>.</li>
                     <li><strong>Determine Current Reward:</strong> The current reward is the starting reward minus the amount that has decayed: <code>currentReward = INITIAL_REWARD_PER_CLICK - decayedAmount</code>.</li>
