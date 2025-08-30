@@ -21,7 +21,7 @@ export const sonicMainnet = {
 export const config = createConfig(
   getDefaultConfig({
     appName: "FlowClicker",
-    appUrl: "https://flow-clicker.vercel.app/",
+    appUrl: "https://flowclicker.cc/",
     projectId: "58a22d2bc1c793fc31c117ad9ceba8d9", // Please replace with your own project ID
     chains: [sonicMainnet, mainnet, arbitrum, bsc, optimism, polygon],
     transports: {

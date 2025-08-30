@@ -6,4 +6,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://flow-clicker.vercel.app/sitemap.xml
+Sitemap: https://flowclicker.cc/sitemap.xml

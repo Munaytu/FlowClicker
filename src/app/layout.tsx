@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://flow-clicker.vercel.app/"),
+  metadataBase: new URL("https://flowclicker.cc/"),
   title: {
     default: "FlowClicker - The Ultimate Crypto Clicker Game",
     template: `%s | FlowClicker`,
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FlowClicker - The Ultimate Crypto Clicker Game",
     description: "Click, earn, and claim your crypto fortune!",
-    url: "https://flow-clicker.vercel.app/",
+    url: "https://flowclicker.cc/",
     siteName: "FlowClicker",
     images: [
       {
