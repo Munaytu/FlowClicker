@@ -2,7 +2,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { WagmiProvider, useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useDisconnect, useWaitForTransactionReceipt, useWriteContract, useChainId, useSwitchChain } from 'wagmi';
 import { config, rabbykit, sonicMainnet } from '@/lib/wagmi';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { readContract } from '@wagmi/core';
@@ -74,8 +74,8 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const { disconnect } = useDisconnect();
   const { writeContractAsync, isPending: isClaimingC, error: claimError, reset } = useWriteContract();
 
-  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ 
-    hash: txHash,
+  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({
+    hash: txHash || undefined,
     chainId: sonicMainnet.id,
   });
 
@@ -226,10 +226,12 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         reset();
     }
     if (claimError || receiptError) {
+        const error = claimError || receiptError;
+        const message = (error as any)?.shortMessage || error?.message || 'Could not claim tokens.';
         toast({
             variant: 'destructive',
             title: 'Transaction Failed',
-            description: (claimError?.shortMessage || receiptError?.shortMessage) || 'Could not claim tokens.',
+            description: message,
         });
         setTxHash(null);
         reset();
@@ -397,7 +399,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
       return;
     }
 
-    setTxHash('0x' + '0'.repeat(64));
+    setTxHash(('0x' + '0'.repeat(64)) as `0x${string}`);
 
     try {
       const sigResponse = await fetch('/api/get-claim-signature', {
@@ -457,9 +459,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
 export function UserProvider({ children }: { children: ReactNode }) {
     return (
-        <WagmiProvider config={config}>
-            <UserProviderContent>{children}</UserProviderContent>
-        </WagmiProvider>
+        <UserProviderContent>{children}</UserProviderContent>
     )
 }
 
