@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import * as jose from "jose";
 import { z } from "zod";
+import { redis } from "@/lib/redis";
 
 const claimBodySchema = z.object({
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash"),
@@ -51,6 +52,7 @@ export async function POST(req: AuthenticatedRequest) {
     }
 
     const { player, clicks } = req.user!;
+    const userClicksKey = `user:${player}:clicks`;
     const body = await req.json();
     const validation = claimBodySchema.safeParse(body);
 
@@ -88,6 +90,8 @@ export async function POST(req: AuthenticatedRequest) {
     }
 
     console.log(`Database updated for user ${player}.`);
+
+    await redis.set(userClicksKey, 0);
 
     return NextResponse.json({ success: true });
 

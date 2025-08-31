@@ -97,13 +97,13 @@ export async function POST(req: Request) {
       message,
     });
 
-    await redis.set(userClicksKey, 0);
+    
 
     const secret = new TextEncoder().encode(jwtSecret as string);
     const token = await new jose.SignJWT({ player, clicks })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("5m")
+      .setExpirationTime("30d")
       .sign(secret);
 
     return NextResponse.json({ signature, nonce: nonce.toString(), clicks, token });
