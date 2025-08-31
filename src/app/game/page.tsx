@@ -35,8 +35,8 @@ export default function GamePage() {
       <Card className="w-full max-w-md text-center shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-headline">
-            <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-24 w-24" />
-            SONIC-FLOW
+                        <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-12 w-12" />
+            Flow Clicker
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
