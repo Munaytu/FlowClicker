@@ -243,7 +243,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
                         totalClicks: updatedUserData.total_clicks,
                         totalClaimed: updatedUserData.total_claimed,
                         claimedClicks: updatedUserData.claimed_clicks,
-                        pendingClicks: pending > 0 ? pending : 0,
                     }));
                 }
             };
