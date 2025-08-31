@@ -305,14 +305,30 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         description: 'Could not fetch your data.',
       });
     } else if (data) {
-      const pending = data.total_clicks - data.claimed_clicks;
+      if (data) {
+      // Fetch pending clicks directly from Redis
+      const redisClicksResponse = await fetch('/api/get-redis-clicks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: userId }),
+      });
+
+      let redisPendingClicks = 0;
+      if (redisClicksResponse.ok) {
+        const redisData = await redisClicksResponse.json();
+        redisPendingClicks = redisData.clicks;
+      } else {
+        console.error('Failed to fetch pending clicks from Redis API');
+      }
+
       setState((s) => ({
         ...s,
         totalClicks: data.total_clicks,
         totalClaimed: data.total_claimed,
         claimedClicks: data.claimed_clicks,
-        pendingClicks: pending > 0 ? pending : 0,
+        pendingClicks: redisPendingClicks, // Use value from Redis
       }));
+    }
     }
     setState((s) => ({ ...s, isUserLoaded: true }));
   };
