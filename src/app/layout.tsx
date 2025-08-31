@@ -42,9 +42,9 @@ export const metadata: Metadata = {
     images: ["/flow-logo.png"],
   },
   icons: {
-    icon: "/flow-logo.ico",
-    shortcut: "/flow-logo.ico",
-    apple: "/flow-logo.ico",
+    icon: "/flow-logo.ico?v=1",
+    shortcut: "/flow-logo.ico?v=1",
+    apple: "/flow-logo.ico?v=1",
   },
 };
 

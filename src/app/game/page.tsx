@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Coins, Gift, Hand, HelpCircle, Loader2, TrendingDown, Zap } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PulseIcon } from '@/components/ui/pulse-icon';
+import { ClickAnimation } from '@/components/ui/click-animation';
 
 export default function GamePage() {
   const { 
@@ -19,6 +20,13 @@ export default function GamePage() {
     currentRewardPerClick
   } = useUser();
 
+  const [animations, setAnimations] = useState<{ id: number; text: string }[]>([]); // New state
+  const [animationIdCounter, setAnimationIdCounter] = useState(0); // New state
+
+  const handleAnimationComplete = (id: number) => {
+    setAnimations(prev => prev.filter(anim => anim.id !== id));
+  };
+
   const claimTooltipText = "The claimable token amount changes in real-time based on a decay mechanism. The earlier you click, the more you earn!";
 
   return (
@@ -26,16 +34,20 @@ export default function GamePage() {
       <Card className="w-full max-w-md text-center shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-headline">
-            <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-8 w-8 text-primary" />
+            <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-36 w-36" />
             SONIC-FLOW
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="flex flex-col items-center justify-center space-y-4">
             <motion.button
-              onClick={addClick}
+              onClick={() => {
+                addClick();
+                setAnimationIdCounter(prev => prev + 1);
+                setAnimations(prev => [...prev, { id: animationIdCounter, text: "BUY $FLOW" }]);
+              }}
               disabled={!isConnected}
-              className="group relative h-48 w-48 md:h-64 md:w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative h-48 w-48 md:h-64 md:w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 overflow-hidden"
               aria-label="Click to earn"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.9 }}
@@ -44,6 +56,11 @@ export default function GamePage() {
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-primary/20 transition-colors group-hover:bg-primary/30">
                 <PulseIcon />
               </div>
+              <AnimatePresence>
+                {animations.map(anim => (
+                  <ClickAnimation key={anim.id} id={anim.id} text={anim.text} onComplete={handleAnimationComplete} />
+                ))}
+              </AnimatePresence>
             </motion.button>
             {!isConnected && (
               <p className="text-sm text-destructive">Connect wallet to play!</p>
