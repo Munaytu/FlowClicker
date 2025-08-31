@@ -56,7 +56,7 @@ export default function GamePage() {
                 <TrendingDown className="h-4 w-4 animate-pulse" />
                 Current Reward Rate
               </p>
-              <p className="text-center text-2xl font-bold text-primary">{parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
+              <p className="text-center text-2xl font-bold text-primary">{currentRewardPerClick ? parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '0'}</p>
               <p className="text-center text-xs text-primary/80">tokens / click</p>
             </CardContent>
           </Card>
@@ -65,7 +65,7 @@ export default function GamePage() {
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">Clicks</p>
               <p className="text-3xl font-bold flex items-center justify-center gap-2">
-                {pendingClicks.toLocaleString()} <span className="text-2xl">💫</span>
+                {pendingClicks ? pendingClicks.toLocaleString() : '0'} <span className="text-2xl">💫</span>
               </p>
             </div>
             <div className="rounded-lg border bg-card p-4">
@@ -83,7 +83,7 @@ export default function GamePage() {
                 </TooltipProvider>
               </div>
               <p className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-                {parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 2 })} <Coins className="h-7 w-7" />
+                {claimableTokens ? parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} <Coins className="h-7 w-7" />
               </p>
             </div>
           </div>

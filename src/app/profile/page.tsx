@@ -75,7 +75,7 @@ export default function ProfilePage() {
   const countryName = countryData ? countryData.name : country;
   const countryFlag = countryData ? countryData.flag : '';
 
-  const pendingClicksTooltip = `You have ${pendingClicks.toLocaleString()} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
+  const pendingClicksTooltip = `You have ${pendingClicks ? pendingClicks.toLocaleString() : '0'} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
 
   const balanceAmount = Number(balance?.formatted ?? 0);
   const usdValue = tokenPriceUSD ? balanceAmount * tokenPriceUSD : 0;
@@ -92,30 +92,30 @@ export default function ProfilePage() {
           <StatCard 
             icon={Wallet} 
             title="My Wallet Balance" 
-            value={`${balanceAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance?.symbol}`}
+            value={`${balanceAmount ? balanceAmount.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '0'} ${balance?.symbol}`}
             tooltipText="Your current token balance in your connected wallet. Click to view on SonicScan."
             link={`https://sonicscan.org/address/${walletAddress}`}
           />
           <StatCard 
             icon={Gem} 
             title="Tokens Claimed" 
-            value={totalClaimed.toLocaleString(undefined, { maximumFractionDigits: 2 })} 
-            subValue={`${claimedClicks.toLocaleString()} clicks converted`}
+            value={totalClaimed ? totalClaimed.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} 
+            subValue={`${claimedClicks ? claimedClicks.toLocaleString() : '0'} clicks converted`}
             tooltipText="The total amount of tokens you have successfully claimed from your clicks." 
           />
           <StatCard 
             icon={Hand} 
             title="My Total Clicks" 
-            value={totalClicks.toLocaleString()} 
+            value={totalClicks ? totalClicks.toLocaleString() : '0'} 
             tooltipText="Your lifetime click count. Keep clicking!" 
           />
           <StatCard 
             icon={Hourglass} 
             title="Pending Clicks" 
-            value={pendingClicks.toLocaleString()} 
+            value={pendingClicks ? pendingClicks.toLocaleString() : '0'} 
             tooltipText={pendingClicksTooltip} 
           />
-          <StatCard icon={Gift} title="Ready to Claim" value={`${parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 4 })} ${balance?.symbol}`} tooltipText="The real-time amount of tokens you will receive for your pending clicks right now." />
+          <StatCard icon={Gift} title="Ready to Claim" value={`${claimableTokens ? parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 4 }) : '0'} ${balance?.symbol}`} tooltipText="The real-time amount of tokens you will receive for your pending clicks right now." />
           <StatCard icon={MapPin} title="Your Country" value={`${countryFlag} ${countryName}`} />
         </div>
 
@@ -124,11 +124,11 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Claim Your Tokens</CardTitle>
               <CardDescription>
-                You have {pendingClicks.toLocaleString()} clicks ready to be claimed.
+                You have {pendingClicks ? pendingClicks.toLocaleString() : '0'} clicks ready to be claimed.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-4xl font-bold">{parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
+              <p className="text-4xl font-bold">{claimableTokens ? parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 4 }) : '0'}</p>
               <p className="text-sm text-muted-foreground">${balance?.symbol} Tokens</p>
               <Button
                 size="lg"
@@ -150,7 +150,7 @@ export default function ProfilePage() {
               {decayInfo ? (
                 <div className='text-sm'>
                   <div className="mb-4 p-3 rounded-lg border bg-muted text-center">
-                    <p className="font-bold text-lg text-primary">{parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
+                    <p className="font-bold text-lg text-primary">{currentRewardPerClick ? parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '0'}</p>
                     <p className="text-xs text-muted-foreground">Current Tokens / Click</p>
                   </div>
                   <p>The reward for each click started at <strong>{decayInfo.initialReward}</strong> tokens and will decrease to <strong>{decayInfo.finalReward}</strong> tokens over approximately <strong>{decayInfo.decayDurationInDays} days</strong>.</p>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className='text-center'>
             <p className='text-4xl font-bold'>#{countryRank > 0 ? countryRank : 'N/A'}</p>
-            <p className='text-lg text-muted-foreground'>{countryName}: {countryClicks.toLocaleString()} clicks</p>
+            <p className='text-lg text-muted-foreground'>{countryName}: {countryClicks ? countryClicks.toLocaleString() : '0'} clicks</p>
           </CardContent>
         </Card>
 
