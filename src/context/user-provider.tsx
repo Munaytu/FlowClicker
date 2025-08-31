@@ -224,6 +224,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         }));
         setTxHash(null);
         reset();
+        fetchUserData(state.userId, chainId); // Re-fetch user data to ensure synchronization
     }
     if (claimError || receiptError) {
         const error = claimError || receiptError;
