@@ -8,6 +8,7 @@ import { Coins, Gift, Hand, HelpCircle, Loader2, TrendingDown, Zap } from 'lucid
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PulseIcon } from '@/components/ui/pulse-icon';
 import { ClickAnimation } from '@/components/ui/click-animation';
+import { useState } from 'react';
 
 export default function GamePage() {
   const { 
