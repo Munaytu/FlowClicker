@@ -36,7 +36,7 @@ export function Header() {
             <SheetContent side="left">
               <div className="flex flex-col gap-4 py-4">
                 <div className="mb-4 flex items-center gap-2">
-                  <img src="/logo.svg" alt="FlowClicker Logo" className="h-6 w-6 text-primary" />
+                  <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-6 w-6 text-primary" />
                   <span className="font-bold text-xl">FlowClicker</span>
                 </div>
                 <nav className="flex flex-col gap-2">
@@ -61,7 +61,7 @@ export function Header() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-2">
-          <img src="/logo.svg" alt="FlowClicker Logo" className="h-6 w-6 text-primary" />
+          <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-6 w-6 text-primary" />
           <Link href="/game" className="font-bold text-xl">
             FlowClicker
           </Link>
@@ -74,7 +74,7 @@ export function Header() {
           {isConnected && walletAddress ? (
             isWrongNetwork ? (
               <Button onClick={switchToSonicNetwork} variant="destructive">
-                <img src="/logo.svg" alt="FlowClicker Logo" className="mr-2 h-4 w-4" />
+                <img src="/flow-logo.png" alt="FlowClicker Logo" className="mr-2 h-4 w-4" />
                 Switch to Sonic
               </Button>
             ) : (

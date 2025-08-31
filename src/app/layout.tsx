@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     siteName: "FlowClicker",
     images: [
       {
-        url: "/social-preview.svg", // Make sure to create this image
+        url: "/flow-logo.png",
         width: 1200,
         height: 630,
       },
@@ -39,12 +39,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FlowClicker - The Ultimate Crypto Clicker Game",
     description: "Join the clicker revolution! Earn real $FLOW tokens on the Sonic Mainnet.",
-    images: ["/social-preview.svg"], // Make sure to create this image
+    images: ["/flow-logo.png"],
   },
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/flow-logo.ico",
+    shortcut: "/flow-logo.ico",
+    apple: "/flow-logo.ico",
   },
 };
 

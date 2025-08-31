@@ -12,7 +12,7 @@ export function PulseIcon() {
       
       {/* Central static icon */}
       <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/30">
-        <img src="/logo.svg" alt="FlowClicker Logo" className="h-10 w-10 text-primary" />
+        <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-10 w-10 text-primary" />
       </div>
     </div>
   );
