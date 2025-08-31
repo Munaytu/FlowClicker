@@ -35,7 +35,7 @@ export default function GamePage() {
       <Card className="w-full max-w-md text-center shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-headline">
-            <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-36 w-36" />
+            <img src="/flow-logo.png" alt="FlowClicker Logo" className="h-24 w-24" />
             SONIC-FLOW
           </CardTitle>
         </CardHeader>
@@ -45,7 +45,9 @@ export default function GamePage() {
               onClick={() => {
                 addClick();
                 setAnimationIdCounter(prev => prev + 1);
-                setAnimations(prev => [...prev, { id: animationIdCounter, text: "BUY $FLOW" }]);
+                const colors = ["#FFD700", "#ADFF2F", "#00FFFF", "#FF69B4", "#8A2BE2"]; // Gold, GreenYellow, Cyan, HotPink, BlueViolet
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                setAnimations(prev => [...prev, { id: animationIdCounter, text: "BUY $FLOW", color: randomColor }]);
               }}
               disabled={!isConnected}
               className="group relative h-48 w-48 md:h-64 md:w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 overflow-hidden"
@@ -59,7 +61,7 @@ export default function GamePage() {
               </div>
               <AnimatePresence>
                 {animations.map(anim => (
-                  <ClickAnimation key={anim.id} id={anim.id} text={anim.text} onComplete={handleAnimationComplete} />
+                  <ClickAnimation key={anim.id} id={anim.id} text={anim.text} color={anim.color} onComplete={handleAnimationComplete} />
                 ))}
               </AnimatePresence>
             </motion.button>

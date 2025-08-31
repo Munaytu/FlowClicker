@@ -6,10 +6,11 @@ import { useEffect, useState } from 'react';
 interface ClickAnimationProps {
   id: number;
   text: string;
+  color: string; // Added color
   onComplete: (id: number) => void;
 }
 
-export function ClickAnimation({ id, text, onComplete }: ClickAnimationProps) {
+export function ClickAnimation({ id, text, color, onComplete }: ClickAnimationProps) { // Added color
   return (
     <motion.div
       initial={{ opacity: 0, y: 0, scale: 0.8 }}
@@ -23,7 +24,8 @@ export function ClickAnimation({ id, text, onComplete }: ClickAnimationProps) {
         top: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 10,
-        textShadow: '0 0 8px rgba(255,255,255,0.5)'
+        textShadow: '0 0 8px rgba(255,255,255,0.5)',
+        color: color // Used color
       }}
     >
       {text}
