@@ -21,7 +21,7 @@ export default function GamePage() {
     currentRewardPerClick
   } = useUser();
 
-  const [animations, setAnimations] = useState<{ id: number; text: string }[]>([]); // New state
+  const [animations, setAnimations] = useState<{ id: number; text: string; color: string }[]>([]); // New state
   const [animationIdCounter, setAnimationIdCounter] = useState(0); // New state
 
   const handleAnimationComplete = (id: number) => {
