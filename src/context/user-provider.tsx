@@ -224,8 +224,27 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         }));
         setTxHash(null);
         reset();
-        if (state.userId) { // Added null check
-            fetchUserData(state.userId, chainId); // Re-fetch user data to ensure synchronization
+
+        // Re-fetch user data directly from Supabase to ensure synchronization
+        if (state.userId) {
+            const { data: updatedUserData, error: updatedFetchError } = await supabase
+                .from('users')
+                .select('total_claimed, total_clicks, claimed_clicks')
+                .eq('id', state.userId)
+                .single();
+
+            if (updatedFetchError) {
+                console.error('Error re-fetching user data after claim:', updatedFetchError);
+            } else if (updatedUserData) {
+                const pending = updatedUserData.total_clicks - updatedUserData.claimed_clicks;
+                setState((s) => ({
+                    ...s,
+                    totalClicks: updatedUserData.total_clicks,
+                    totalClaimed: updatedUserData.total_claimed,
+                    claimedClicks: updatedUserData.claimed_clicks,
+                    pendingClicks: pending > 0 ? pending : 0,
+                }));
+            }
         }
     }
     if (claimError || receiptError) {
