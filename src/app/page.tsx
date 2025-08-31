@@ -6,6 +6,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center bg-background text-foreground p-4 text-center animate-fade-in">
       <div className="max-w-2xl">
+        <img src="/flow-logo.png" alt="FlowClicker Logo" className="mx-auto mb-8 h-32 w-32 md:h-48 md:w-48" />
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-primary">
           FlowClicker
         </h1>
