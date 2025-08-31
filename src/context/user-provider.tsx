@@ -408,7 +408,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         body: JSON.stringify({ player: state.walletAddress, clicks: state.pendingClicks }),
       });
 
-      const { signature, nonce } = await sigResponse.json();
+      const { signature, nonce, token } = await sigResponse.json();
 
       if (!sigResponse.ok) {
         throw new Error('Failed to get claim signature');
@@ -426,7 +426,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
       await fetch('/api/claim', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ 
             player: state.walletAddress, 
             amount: state.claimableTokens, 
