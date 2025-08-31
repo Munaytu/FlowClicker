@@ -4,6 +4,7 @@ import './globals.css';
 import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
+import { Mail, Twitter } from 'lucide-react';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
     siteName: "FlowClicker",
     images: [
       {
-        url: "/og-image.png", // Make sure to create this image
+        url: "/social-preview.svg", // Make sure to create this image
         width: 1200,
         height: 630,
       },
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FlowClicker - The Ultimate Crypto Clicker Game",
     description: "Join the clicker revolution! Earn real $FLOW tokens on the Sonic Mainnet.",
-    images: ["/og-image.png"], // Make sure to create this image
+    images: ["/social-preview.svg"], // Make sure to create this image
   },
   icons: {
     icon: "/logo.svg",
@@ -66,6 +67,31 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
+            <footer className="border-t py-6 md:py-8">
+              <div className="container flex flex-col items-center justify-center gap-4 md:flex-row md:justify-between">
+                <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+                  © {new Date().getFullYear()} FlowClicker. All rights reserved.
+                </p>
+                <div className="flex items-center gap-4">
+                  <a
+                    href="mailto:flowclicker@proton.me"
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span className="hidden sm:inline">flowclicker@proton.me</span>
+                  </a>
+                  <a
+                    href="https://twitter.com/FlowClickerFlow"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    <Twitter className="h-4 w-4" />
+                    <span className="hidden sm:inline">@FlowClickerFlow</span>
+                  </a>
+                </div>
+              </div>
+            </footer>
           </div>
           <Toaster />
         </Providers>
