@@ -6,98 +6,96 @@ import { redis } from "@/lib/redis";
 
 const claimBodySchema = z.object({
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash"),
-  amount: z.string(), // The amount from the contract event
+  amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: "Amount must be a positive number string",
+  }),
 });
 
 interface AuthenticatedRequest extends NextRequest {
   user?: {
     player: string;
-    clicks: number;
   };
 }
 
-// Middleware for JWT verification
-async function verifyJwt(req: AuthenticatedRequest, res: NextResponse) {
-  const token = req.headers.get("Authorization")?.split(" ")[1];
+// Type definition for the data returned from the Supabase RPC function
+interface ClaimRewardsResponse {
+  success: boolean;
+  message: string;
+  new_total_claimed: number;
+  new_claimed_clicks: number;
+}
 
-  if (!token) {
-    return NextResponse.json({ error: "Authorization token not provided" }, { status: 401 });
-  }
+// Simplified JWT verification to get the user ID
+async function getUserIdFromToken(req: AuthenticatedRequest): Promise<string | null> {
+  const token = req.headers.get("Authorization")?.split(" ")[1];
+  if (!token) return null;
 
   const jwtSecret = process.env.JWT_SECRET_KEY;
   if (!jwtSecret) {
     console.error("JWT_SECRET_KEY is not set");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    return null;
   }
 
   try {
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jose.jwtVerify(token, secret);
-    req.user = {
-      player: payload.player as string,
-      clicks: payload.clicks as number,
-    };
-    return null; // Indicates success
+    return payload.player as string;
   } catch (error) {
     console.error("JWT Verification failed:", error);
-    return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+    return null;
   }
 }
 
 export async function POST(req: AuthenticatedRequest) {
   try {
-    const verificationResponse = await verifyJwt(req, new NextResponse());
-    if (verificationResponse) {
-      return verificationResponse;
+    const userId = await getUserIdFromToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: "Invalid or missing authorization token" }, { status: 401 });
     }
 
-    const { player, clicks } = req.user!;
-    const userClicksKey = `user:${player}:clicks`;
     const body = await req.json();
     const validation = claimBodySchema.safeParse(body);
 
     if (!validation.success) {
-        return NextResponse.json({ error: "Invalid input", details: validation.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Invalid input", details: validation.error.flatten() }, { status: 400 });
     }
 
     const { amount } = validation.data;
+    const userClicksKey = `user:${userId}:clicks`;
 
-    const { data: userData, error: fetchError } = await supabase
-      .from('users')
-      .select('total_claimed, claimed_clicks')
-      .eq('id', player)
-      .single();
+    // Authoritative read from Redis
+    const clicksToClaim = Number(await redis.get(userClicksKey) || 0);
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw new Error(`Error fetching user from DB: ${fetchError.message}`);
+    if (clicksToClaim <= 0) {
+      return NextResponse.json({ error: "No clicks to claim" }, { status: 400 });
     }
 
-    const currentClaimed = userData?.total_claimed || 0;
-    const newTotalClaimed = currentClaimed + parseFloat(amount);
-    const currentClaimedClicks = userData?.claimed_clicks || 0;
-    const newTotalClaimedClicks = currentClaimedClicks + clicks;
+    // Call the atomic RPC function in Supabase
+    const { data, error: rpcError } = await supabase.rpc('claim_rewards', {
+      p_user_id: userId,
+      p_amount_to_claim: parseFloat(amount),
+      p_clicks_to_claim: clicksToClaim,
+    }).single();
 
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
-        total_claimed: newTotalClaimed,
-        claimed_clicks: newTotalClaimedClicks
-      })
-      .eq('id', player);
+    // Cast the response data to our defined type
+    const rpcData = data as unknown as ClaimRewardsResponse | null;
 
-    if (updateError) {
-      console.error(`Failed to update DB for user ${player} after claim: ${updateError.message}`);
+    if (rpcError || !rpcData || !rpcData.success) {
+      const errorMessage = rpcError?.message || rpcData?.message || "An unknown RPC error occurred";
+      console.error(`RPC Error for user ${userId}:`, errorMessage);
+      return NextResponse.json({ error: "Failed to process claim in database", details: errorMessage }, { status: 500 });
     }
 
-    console.log(`Database updated for user ${player}.`);
-
+    // If the transaction was successful, reset the clicks in Redis
     await redis.set(userClicksKey, 0);
 
-    return NextResponse.json({ success: true });
+    console.log(`Successfully claimed ${clicksToClaim} clicks and ${amount} tokens for user ${userId}.`);
+
+    return NextResponse.json({ claimedAmount: amount, claimedClicks: clicksToClaim, ...rpcData });
 
   } catch (error) {
-    console.error("Error in claim API:", error);
+    console.error("Unhandled error in /api/claim endpoint:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    return NextResponse.json({ error: "Failed to database", details: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error", details: errorMessage }, { status: 500 });
   }
 }
