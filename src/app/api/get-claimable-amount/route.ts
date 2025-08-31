@@ -38,12 +38,12 @@ export async function POST(request: Request) {
     });
 
     const [
-      currentReward,
-      decimals,
-      initialReward,
-      finalReward,
-      decayDuration,
-      launchTime
+      currentRewardRaw,
+      decimalsRaw,
+      initialRewardRaw,
+      finalRewardRaw,
+      decayDurationRaw,
+      launchTimeRaw
     ] = await Promise.all([
       readContractCall('getCurrentReward'),
       readContractCall('decimals'),
@@ -52,6 +52,13 @@ export async function POST(request: Request) {
       readContractCall('DECAY_DURATION_SECONDS'),
       readContractCall('launchTime'),
     ]);
+
+    const currentReward = currentRewardRaw as bigint;
+    const decimals = decimalsRaw as number;
+    const initialReward = initialRewardRaw as bigint;
+    const finalReward = finalRewardRaw as bigint;
+    const decayDuration = decayDurationRaw as bigint;
+    const launchTime = launchTimeRaw as bigint;
 
     const clicksBigInt = BigInt(clicks ?? 0);
     const claimableAmount = clicksBigInt * (BigInt(currentReward ?? 0));
