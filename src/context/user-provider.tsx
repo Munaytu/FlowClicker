@@ -407,7 +407,10 @@ function UserProviderContent({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/click', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
+        },
         body: JSON.stringify({ userId: state.userId, country: state.country }),
       });
 
