@@ -418,11 +418,10 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
     } catch (error) {
       console.error('Error saving click:', error);
-      setState((s) => ({
-        ...s,
-        pendingClicks: s.pendingClicks - 1,
-        totalClicks: s.totalClicks - 1,
-      }));
+      // On error, revert the optimistic update and re-fetch the source of truth
+      if (state.userId && chainId) {
+        fetchUserData(state.userId, chainId);
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
