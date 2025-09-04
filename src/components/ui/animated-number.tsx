@@ -49,7 +49,7 @@ const AnimatedNumber = ({ value, className, localeOptions }: AnimatedNumberProps
     // Cleanup function
     return () => {
       if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameFrameRef.current);
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, [value]);
