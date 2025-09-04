@@ -3,7 +3,7 @@ import { createPublicClient, http, formatUnits, defineChain } from 'viem';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { supabase } from '@/lib/supabase';
 
-export const revalidate = 60; // Revalidate every 60 seconds
+
 
 const sonicMainnet = defineChain({
   id: 146,
