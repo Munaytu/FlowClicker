@@ -114,6 +114,7 @@ export default function ProfilePage() {
             value={totalClicks ? totalClicks.toLocaleString() : '0'} 
             tooltipText="Your lifetime click count. Keep clicking!" 
             isAnimated
+            localeOptions={{ maximumFractionDigits: 0 }}
           />
           <StatCard 
             icon={Hourglass} 
@@ -121,6 +122,7 @@ export default function ProfilePage() {
             value={pendingClicks ? pendingClicks.toLocaleString() : '0'} 
             tooltipText={pendingClicksTooltip} 
             isAnimated
+            localeOptions={{ maximumFractionDigits: 0 }}
           />
           <StatCard 
             icon={Gift} 
@@ -189,7 +191,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className='text-center'>
             <p className='text-4xl font-bold'>#{countryRank > 0 ? countryRank : 'N/A'}</p>
-            <p className='text-lg text-muted-foreground'>{countryName}: <AnimatedNumber value={countryClicks} /> clicks</p>
+            <p className='text-lg text-muted-foreground'>{countryName}: <AnimatedNumber value={countryClicks} localeOptions={{ maximumFractionDigits: 0 }} /> clicks</p>
           </CardContent>
         </Card>
 

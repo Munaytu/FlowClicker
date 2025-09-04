@@ -114,6 +114,7 @@ export default function DashboardPage() {
             icon={Flame}
             tooltipText="The total number of clicks made by all players since the beginning."
             isAnimated
+            localeOptions={{ maximumFractionDigits: 0 }}
           />
         </div>
         <div className="md:col-span-2">
@@ -161,7 +162,7 @@ export default function DashboardPage() {
                           {country.name}
                         </TableCell>
                         <TableCell className="text-right font-mono">
-                          <AnimatedNumber value={country.clicks} />
+                          <AnimatedNumber value={country.clicks} localeOptions={{ maximumFractionDigits: 0 }} />
                         </TableCell>
                       </TableRow>
                     ))}

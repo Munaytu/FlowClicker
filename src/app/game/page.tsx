@@ -88,7 +88,7 @@ export default function GamePage() {
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">Clicks</p>
               <p className="text-3xl font-bold flex items-center justify-center gap-2">
-                <AnimatedNumber value={pendingClicks} /> <span className="text-2xl">💫</span>
+                <AnimatedNumber value={pendingClicks} localeOptions={{ maximumFractionDigits: 0 }} /> <span className="text-2xl">💫</span>
               </p>
             </div>
             <div className="rounded-lg border bg-card p-4">
