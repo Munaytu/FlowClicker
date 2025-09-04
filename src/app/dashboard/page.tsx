@@ -1,15 +1,16 @@
 'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Flame, Gem, Globe, HelpCircle, LinkIcon, Package, Users } from 'lucide-react';
+import { Flame, Gem, Globe, HelpCircle, LinkIcon, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { countryCodeToData } from '@/lib/countries';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { contractAddress } from '@/lib/contract-config';
+import AnimatedNumber from '@/components/ui/animated-number';
 
 // Fetcher function for react-query
 const fetchGlobalStats = async () => {
@@ -20,7 +21,7 @@ const fetchGlobalStats = async () => {
   return response.json();
 };
 
-function StatCard({ title, value, icon: Icon, tooltipText }: { title: string; value: string; icon: React.ElementType, tooltipText?: string }) {
+function StatCard({ title, value, icon: Icon, tooltipText, isAnimated = false, localeOptions }: { title: string; value: string; icon: React.ElementType, tooltipText?: string, isAnimated?: boolean, localeOptions?: Intl.NumberFormatOptions }) {
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -42,7 +43,13 @@ function StatCard({ title, value, icon: Icon, tooltipText }: { title: string; va
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold">
+          {isAnimated ? (
+            <AnimatedNumber value={Number(value)} localeOptions={localeOptions} />
+          ) : (
+            value
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -52,7 +59,7 @@ export default function DashboardPage() {
   const { data: globalStats, isLoading: isLoadingStats, error: statsError } = useQuery({
     queryKey: ['globalStats'],
     queryFn: fetchGlobalStats,
-    refetchInterval: 60000, // Refetch every 60 seconds
+    refetchInterval: 2000, // Refetch every 2 seconds
   });
 
   const [topCountries, setTopCountries] = useState<{ name: string; flag: string; clicks: number }[]>([]);
@@ -84,7 +91,7 @@ export default function DashboardPage() {
 
   const loading = isLoadingStats || isLoadingCountries;
 
-  if (loading) {
+  if (loading && !globalStats) { // Show loading only on initial load
     return <div className="container py-10">Loading...</div>;
   }
 
@@ -110,25 +117,30 @@ export default function DashboardPage() {
         <div className="md:col-span-2">
           <StatCard
             title="Total Clicks (All Time)"
-            value={globalStats ? Number(globalStats.totalClicksAllTime).toLocaleString() : '0'}
+            value={globalStats ? globalStats.totalClicksAllTime : '0'}
             icon={Flame}
             tooltipText="The total number of clicks made by all players since the beginning."
+            isAnimated
           />
         </div>
         <div className="md:col-span-2">
           <StatCard
             title="Total Tokens Claimed"
-            value={globalStats ? Number(globalStats.totalClaimed).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'}
+            value={globalStats ? globalStats.totalClaimed : '0'}
             icon={Gem}
             tooltipText="The total amount of tokens claimed by all players. This represents the portion of the supply currently in circulation."
+            isAnimated
+            localeOptions={{ maximumFractionDigits: 2 }}
           />
         </div>
         <div className="md:col-span-2">
           <StatCard
             title="Total Token Supply"
-            value={globalStats ? Number(globalStats.totalSupply).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'}
+            value={globalStats ? globalStats.totalSupply : '0'}
             icon={Package}
             tooltipText={tokenomicsTooltip}
+            isAnimated
+            localeOptions={{ maximumFractionDigits: 2 }}
           />
         </div>
         

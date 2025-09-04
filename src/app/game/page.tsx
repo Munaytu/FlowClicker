@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PulseIcon } from '@/components/ui/pulse-icon';
 import { ClickAnimation } from '@/components/ui/click-animation';
 import { useState } from 'react';
+import AnimatedNumber from '@/components/ui/animated-number';
 
 export default function GamePage() {
   const { 
@@ -76,7 +77,9 @@ export default function GamePage() {
                 <TrendingDown className="h-4 w-4 animate-pulse" />
                 Current Reward Rate
               </p>
-              <p className="text-center text-2xl font-bold text-primary">{currentRewardPerClick ? parseFloat(currentRewardPerClick).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '0'}</p>
+              <p className="text-center text-2xl font-bold text-primary">
+                <AnimatedNumber value={Number(currentRewardPerClick)} localeOptions={{ maximumFractionDigits: 6 }} />
+              </p>
               <p className="text-center text-xs text-primary/80">tokens / click</p>
             </CardContent>
           </Card>
@@ -85,7 +88,7 @@ export default function GamePage() {
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">Clicks</p>
               <p className="text-3xl font-bold flex items-center justify-center gap-2">
-                {pendingClicks ? pendingClicks.toLocaleString() : '0'} <span className="text-2xl">💫</span>
+                <AnimatedNumber value={pendingClicks} /> <span className="text-2xl">💫</span>
               </p>
             </div>
             <div className="rounded-lg border bg-card p-4">
@@ -103,7 +106,7 @@ export default function GamePage() {
                 </TooltipProvider>
               </div>
               <p className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-                {claimableTokens ? parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} <Coins className="h-7 w-7" />
+                <AnimatedNumber value={Number(claimableTokens)} localeOptions={{ maximumFractionDigits: 2 }} /> <Coins className="h-7 w-7" />
               </p>
             </div>
           </div>
