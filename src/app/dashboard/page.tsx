@@ -4,7 +4,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Flame, Gem, Globe, HelpCircle, LinkIcon, Package } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { countryCodeToData } from '@/lib/countries';
@@ -12,13 +11,28 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { contractAddress } from '@/lib/contract-config';
 import AnimatedNumber from '@/components/ui/animated-number';
 
-// Fetcher function for react-query
+// Fetcher functions for react-query
 const fetchGlobalStats = async () => {
   const response = await fetch('/api/global-stats');
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
+  if (!response.ok) throw new Error('Network response was not ok');
   return response.json();
+};
+
+const fetchTopCountries = async () => {
+  const { data: countries, error } = await supabase
+    .from('country_clicks')
+    .select('country_code, total_clicks')
+    .order('total_clicks', { ascending: false })
+    .limit(20);
+
+  if (error) throw new Error('Failed to fetch country data');
+
+  return countries
+    .map(country => {
+      const countryData = countryCodeToData[country.country_code];
+      return countryData ? { ...countryData, clicks: country.total_clicks } : null;
+    })
+    .filter(Boolean) as { name: string; flag: string; clicks: number }[];
 };
 
 function StatCard({ title, value, icon: Icon, tooltipText, isAnimated = false, localeOptions }: { title: string; value: string; icon: React.ElementType, tooltipText?: string, isAnimated?: boolean, localeOptions?: Intl.NumberFormatOptions }) {
@@ -62,40 +76,19 @@ export default function DashboardPage() {
     refetchInterval: 2000, // Refetch every 2 seconds
   });
 
-  const [topCountries, setTopCountries] = useState<{ name: string; flag: string; clicks: number }[]>([]);
-  const [isLoadingCountries, setIsLoadingCountries] = useState(true);
+  const { data: topCountries, isLoading: isLoadingCountries, error: countriesError } = useQuery({
+    queryKey: ['topCountries'],
+    queryFn: fetchTopCountries,
+    refetchInterval: 2000, // Refetch every 2 seconds
+  });
 
-  useEffect(() => {
-    async function fetchCountries() {
-      setIsLoadingCountries(true);
-      const { data: countries, error: countriesError } = await supabase
-        .from('country_clicks')
-        .select('country_code, total_clicks')
-        .order('total_clicks', { ascending: false })
-        .limit(20);
-      
-      if (countries) {
-        const formattedCountries = countries
-          .map(country => {
-            const countryData = countryCodeToData[country.country_code];
-            return countryData ? { ...countryData, clicks: country.total_clicks } : null;
-          })
-          .filter(Boolean) as { name: string; flag: string; clicks: number }[];
-        setTopCountries(formattedCountries);
-      }
-      setIsLoadingCountries(false);
-    }
+  const loading = (isLoadingStats && !globalStats) || (isLoadingCountries && !topCountries);
 
-    fetchCountries();
-  }, []);
-
-  const loading = isLoadingStats || isLoadingCountries;
-
-  if (loading && !globalStats) { // Show loading only on initial load
+  if (loading) {
     return <div className="container py-10">Loading...</div>;
   }
 
-  if (statsError) {
+  if (statsError || countriesError) {
     return <div className="container py-10">Error loading stats. Please try again later.</div>;
   }
 
@@ -160,14 +153,16 @@ export default function DashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topCountries.map((country, index) => (
+                    {topCountries?.map((country, index) => (
                       <TableRow key={country.name}>
                         <TableCell className="font-medium">#{index + 1}</TableCell>
                         <TableCell className="flex items-center gap-3">
                           <span className="text-2xl">{country.flag}</span>
                           {country.name}
                         </TableCell>
-                        <TableCell className="text-right font-mono">{country.clicks.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          <AnimatedNumber value={country.clicks} />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

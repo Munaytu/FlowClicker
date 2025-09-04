@@ -16,7 +16,7 @@ const AnimatedNumber = ({ value, className, localeOptions }: AnimatedNumberProps
   useEffect(() => {
     const startValue = prevValueRef.current;
     const endValue = value;
-    const duration = 1500; // Animate over 1.5 seconds
+    const duration = 2500; // Animate over 2.5 seconds
     let startTime: number | null = null;
 
     const animate = (timestamp: number) => {
