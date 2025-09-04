@@ -18,6 +18,18 @@ const clickBodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // API Key Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing API Key' }, { status: 401 });
+    }
+    const apiKey = authHeader.substring(7); // Remove "Bearer "
+    const validApiKeys = (process.env.VALID_API_KEYS || "").split(',');
+
+    if (!validApiKeys.includes(apiKey)) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid API Key' }, { status: 401 });
+    }
+
     const body = await req.json();
     const validation = clickBodySchema.safeParse(body);
 
