@@ -45,7 +45,22 @@ interface UserContextType extends UserState {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const initialState: UserState = {
-  // ... (initial state remains the same)
+  userId: null,
+  walletAddress: null,
+  isConnected: false,
+  isWrongNetwork: false,
+  isUserLoaded: false,
+  pendingClicks: 0,
+  totalClicks: 0,
+  totalClaimed: 0,
+  claimedClicks: 0,
+  country: 'FL', // Default to Flowland
+  claimableTokens: '0',
+  decayInfo: null,
+  currentRewardPerClick: '0',
+  tokenPriceUSD: null,
+  totalSupply: null,
+  totalClaimedAllUsers: null,
 };
 
 async function fetchUserData(userId: string) {
