@@ -36,7 +36,7 @@ const TokenomicsPage = () => {
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
           Welcome to FlowClicker
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+        <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto">
           Your Adventure in the Crypto Universe. Here you will learn how your
           clicks turn into real value, in a simple and transparent way.
         </p>
@@ -45,7 +45,7 @@ const TokenomicsPage = () => {
       <main className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-xl md:text-2xl">
               Part 1: The Game - From Clicks to Digital Coins
             </CardTitle>
             <CardDescription>
@@ -63,7 +63,7 @@ const TokenomicsPage = () => {
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger className="text-lg font-semibold">
+                <AccordionTrigger className="text-base md:text-lg font-semibold">
                   Phase 1: Accumulate Clicks (Free & Instant!)
                 </AccordionTrigger>
                 <AccordionContent className="text-base">
@@ -78,7 +78,7 @@ const TokenomicsPage = () => {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger className="text-lg font-semibold">
+                <AccordionTrigger className="text-base md:text-lg font-semibold">
                   Phase 2: Claim Tokens (The Blockchain Transaction)
                 </AccordionTrigger>
                 <AccordionContent className="text-base space-y-4">
@@ -155,7 +155,7 @@ const TokenomicsPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-xl md:text-2xl">
               Part 2: Tokenomics - The Economy of FlowClicker
             </CardTitle>
             <CardDescription>
@@ -163,7 +163,7 @@ const TokenomicsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <h3 className="text-xl font-semibold">
+            <h3 className="text-lg md:text-xl font-semibold">
               $FLOW Creation: The Players' Factory
             </h3>
             <p>
@@ -175,7 +175,7 @@ const TokenomicsPage = () => {
               the community.
             </p>
 
-            <h3 className="text-xl font-semibold">
+            <h3 className="text-lg md:text-xl font-semibold">
               The Value: Supply, Demand, and Utility
             </h3>
             <p>The value of $FLOW is not magical. It is based on two principles:</p>
@@ -199,7 +199,7 @@ const TokenomicsPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-xl md:text-2xl">
               Part 3: The Linear Decay Emission Model
             </CardTitle>
             <CardDescription>
@@ -209,7 +209,7 @@ const TokenomicsPage = () => {
           <CardContent className="space-y-6">
             <Accordion type="single" collapsible className="w-full">
                <AccordionItem value="item-1">
-                <AccordionTrigger className="text-lg font-semibold">
+                <AccordionTrigger className="text-base md:text-lg font-semibold">
                   For Beginners: A 3-Year Countdown for Bonus Rewards
                 </AccordionTrigger>
                 <AccordionContent className="text-base space-y-4">
@@ -233,7 +233,7 @@ const TokenomicsPage = () => {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger className="text-lg font-semibold">
+                <AccordionTrigger className="text-base md:text-lg font-semibold">
                   For Experts: Technical Deep Dive
                 </AccordionTrigger>
                 <AccordionContent className="text-base space-y-4">

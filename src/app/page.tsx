@@ -15,7 +15,7 @@ export default function HomePage() {
           className="mx-auto mb-8 h-32 w-32 md:h-48 md:w-48"
           priority
         />
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-primary">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-primary">
           FlowClicker
         </h1>
         <p className="mt-4 text-lg md:text-xl text-muted-foreground">

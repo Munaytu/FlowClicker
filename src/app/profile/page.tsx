@@ -104,7 +104,7 @@ export default function ProfilePage() {
   return (
     <div className="container py-10">
       <div className="space-y-8">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
           <UserIcon className="h-8 w-8" />
           My Stats
         </h1>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-4xl font-bold">
+              <p className="text-3xl md:text-4xl font-bold">
                 <AnimatedNumber value={Number(claimableTokens)} localeOptions={{ maximumFractionDigits: 4 }} />
               </p>
               <p className="text-sm text-muted-foreground">{balance?.symbol} Tokens</p>
@@ -212,8 +212,8 @@ export default function ProfilePage() {
             <CardTitle className="flex items-center gap-2"><BarChart /> Your Contribution</CardTitle>
           </CardHeader>
           <CardContent className='text-center'>
-            <p className='text-4xl font-bold'>#{countryRank > 0 ? countryRank : 'N/A'}</p>
-            <p className='text-lg text-muted-foreground'>{countryName}: <AnimatedNumber value={countryClicks} localeOptions={{ maximumFractionDigits: 0 }} /> clicks</p>
+            <p className='text-3xl md:text-4xl font-bold'>#{countryRank > 0 ? countryRank : 'N/A'}</p>
+            <p className='text-base md:text-lg text-muted-foreground'>{countryName}: <AnimatedNumber value={countryClicks} localeOptions={{ maximumFractionDigits: 0 }} /> clicks</p>
           </CardContent>
         </Card>
 
@@ -259,7 +259,7 @@ function StatCard({ title, value, subValue, icon: Icon, tooltipText, link, isAni
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="text-xl md:text-2xl font-bold">
           {isAnimated && typeof numericValue === 'number' && !isNaN(numericValue) ? (
             <AnimatedNumber value={numericValue} localeOptions={localeOptions} />
           ) : (

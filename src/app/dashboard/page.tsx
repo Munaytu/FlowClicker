@@ -57,7 +57,7 @@ function StatCard({ title, value, icon: Icon, tooltipText, isAnimated = false, l
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
+        <div className="text-2xl md:text-3xl font-bold">
           {isAnimated ? (
             <AnimatedNumber value={Number(value)} localeOptions={localeOptions} />
           ) : (
@@ -98,12 +98,12 @@ export default function DashboardPage() {
     <div className="container py-10 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <div className="md:col-span-6 flex items-center justify-between">
-          <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-2">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight flex items-center gap-2">
             <Globe className="h-8 w-8" />
             Global Stats
           </h1>
-          <a href={`https://sonicscan.org/token/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
-            View Token on SonicScan <LinkIcon className="h-4 w-4" />
+          <a href={`https://sonicscan.org/token/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
+            View on SonicScan <LinkIcon className="h-4 w-4" />
           </a>
         </div>
 
@@ -138,7 +138,7 @@ export default function DashboardPage() {
           />
         </div>
         
-        <div className="md:col-span-4">
+        <div className="md:col-span-6">
           <Card className="h-full hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
               <CardTitle>🏆 Top Countries by Clicks</CardTitle>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px]">Rank</TableHead>
+                      <TableHead className="w-[50px] pr-2">Rank</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead className="text-right">Clicks</TableHead>
                     </TableRow>
@@ -157,11 +157,11 @@ export default function DashboardPage() {
                     {topCountries?.map((country, index) => (
                       <TableRow key={country.name}>
                         <TableCell className="font-medium">#{index + 1}</TableCell>
-                        <TableCell className="flex items-center gap-3">
-                          <span className="text-2xl">{country.flag}</span>
-                          {country.name}
+                        <TableCell className="flex items-center gap-2 md:gap-3">
+                          <span className="text-xl md:text-2xl">{country.flag}</span>
+                          <span className="text-sm md:text-base">{country.name}</span>
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right font-mono text-sm md:text-base">
                           <AnimatedNumber value={country.clicks} localeOptions={{ maximumFractionDigits: 0 }} />
                         </TableCell>
                       </TableRow>
