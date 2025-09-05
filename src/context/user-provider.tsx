@@ -121,6 +121,26 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const { writeContractAsync, reset } = useWriteContract();
   const queryClient = useQueryClient();
 
+  const connectWallet = () => {
+    rabbykit.open();
+  };
+
+  const disconnectWallet = () => {
+    disconnect();
+  };
+
+  const switchToSonicNetwork = () => {
+    if (switchChain) {
+      switchChain({ chainId: sonicMainnet.id });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not switch network. Please do it manually in your wallet.'
+      });
+    }
+  };
+
   // --- DATA FETCHING using React Query ---
 
   const { data: userData, isPending: isUserLoading } = useQuery({
