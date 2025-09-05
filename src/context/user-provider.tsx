@@ -181,4 +181,16 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   );
 }
 
-// ... (UserProvider and useUser export remain the same)
+export function UserProvider({ children }: { children: ReactNode }) {
+    return (
+        <UserProviderContent>{children}</UserProviderContent>
+    )
+}
+
+export function useUser() {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+}
