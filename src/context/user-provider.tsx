@@ -7,7 +7,40 @@ import { config, rabbykit, sonicMainnet } from '@/lib/wagmi';
 import { contractAbi, contractAddress } from '@/lib/contract-config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-// ... (interfaces remain the same)
+interface DecayInfo {
+  initialReward: string;
+  finalReward: string;
+  decayDurationInDays: number;
+  launchTimestamp: number;
+}
+
+interface UserState {
+  userId: string | null;
+  walletAddress: `0x${string}` | null;
+  isConnected: boolean;
+  isWrongNetwork: boolean;
+  isUserLoaded: boolean; // New state
+  pendingClicks: number;
+  totalClicks: number;
+  totalClaimed: number;
+  claimedClicks: number;
+  country: string;
+  claimableTokens: string;
+  decayInfo: DecayInfo | null;
+  currentRewardPerClick: string;
+  tokenPriceUSD: number | null;
+  totalSupply: number | null;
+  totalClaimedAllUsers: number | null;
+}
+
+interface UserContextType extends UserState {
+  connectWallet: () => void;
+  disconnectWallet: () => void;
+  switchToSonicNetwork: () => void;
+  addClick: () => void;
+  claimTokens: () => void;
+  isClaiming: boolean;
+}
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
