@@ -293,6 +293,7 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player: userId }),
+        cache: 'no-store', // Ensure we always get the latest data
       });
 
       let redisPendingClicks = 0;
