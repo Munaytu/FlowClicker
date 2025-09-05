@@ -92,7 +92,7 @@ export async function POST(req: AuthenticatedRequest) {
     });
 
     try {
-      const receipt = await publicClient.getTransactionReceipt(txHash);
+      const receipt = await publicClient.getTransactionReceipt(txHash as `0x${string}`);
 
       if (!receipt || receipt.status !== 'success') {
         return NextResponse.json({ error: "Blockchain transaction failed or not found." }, { status: 400 });
