@@ -189,9 +189,11 @@ export async function POST(req: AuthenticatedRequest) {
         return NextResponse.json({ error: "Failed to process claim in database", details: errorMessage }, { status: 500 });
       }
 
-      await redis.decrby(userClicksKey, onChainClicks);
+      const currentRedisClicks = Number(await redis.get(userClicksKey) || 0);
+      const newRedisClicks = Math.max(0, currentRedisClicks - onChainClicks);
+      await redis.set(userClicksKey, newRedisClicks);
 
-      console.log(`Successfully claimed ${onChainClicks} clicks and updated total_claimed to ${currentOnChainBalance} for user ${userId}.`);
+      console.log(`Successfully claimed ${onChainClicks} clicks. Redis clicks updated from ${currentRedisClicks} to ${newRedisClicks} for user ${userId}.`);
 
       return NextResponse.json({ claimedAmount: onChainAmount, claimedClicks: onChainClicks, new_total_claimed: currentOnChainBalance, success: rpcData.success, message: rpcData.message });
 
