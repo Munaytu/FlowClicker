@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import * as jose from "jose";
 import { z } from "zod";
 import { redis } from "@/lib/redis";
-import { createPublicClient, http, formatUnits, Hash } from 'viem'; // Added viem imports, including Hash
+import { createPublicClient, http, formatUnits, Hash, decodeEventLog } from 'viem'; // Added viem imports, including Hash
 import { defineChain } from 'viem'; // Import defineChain
 import { contractAbi, contractAddress } from "@/lib/contract-config"; // Added contract config
 
@@ -118,7 +118,7 @@ export async function POST(req: AuthenticatedRequest) {
             continue; // Skip logs not from our contract
         }
         try {
-          const decodedLog = publicClient.decodeEventLog({
+          const decodedLog = decodeEventLog({
             abi: [tokensClaimedEvent], // Pass only the specific event ABI
             data: log.data,
             topics: log.topics,
