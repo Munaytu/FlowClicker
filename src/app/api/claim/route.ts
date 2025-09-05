@@ -193,7 +193,7 @@ export async function POST(req: AuthenticatedRequest) {
 
       console.log(`Successfully claimed ${onChainClicks} clicks and updated total_claimed to ${currentOnChainBalance} for user ${userId}.`);
 
-      return NextResponse.json({ claimedAmount: onChainAmount, claimedClicks: onChainClicks, new_total_claimed: currentOnChainBalance, ...rpcData });
+      return NextResponse.json({ claimedAmount: onChainAmount, claimedClicks: onChainClicks, new_total_claimed: currentOnChainBalance, success: rpcData.success, message: rpcData.message });
 
     } catch (error) {
       console.error("Unhandled error in /api/claim endpoint:", error);
