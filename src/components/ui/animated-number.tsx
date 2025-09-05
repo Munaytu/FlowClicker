@@ -56,7 +56,7 @@ const AnimatedNumber = ({ value, className, localeOptions }: AnimatedNumberProps
 
   return (
     <span className={className}>
-      {displayValue.toLocaleString(undefined, localeOptions)}
+      {displayValue.toLocaleString('en-US', localeOptions)}
     </span>
   );
 };

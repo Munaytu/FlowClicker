@@ -76,7 +76,7 @@ export default function ProfilePage() {
   const countryName = countryData ? countryData.name : country;
   const countryFlag = countryData ? countryData.flag : '';
 
-  const pendingClicksTooltip = `You have ${pendingClicks ? pendingClicks.toLocaleString() : '0'} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
+  const pendingClicksTooltip = `You have ${pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
 
   const balanceAmount = Number(balance?.formatted ?? 0);
   const usdValue = tokenPriceUSD ? balanceAmount * tokenPriceUSD : 0;
@@ -103,7 +103,7 @@ export default function ProfilePage() {
             icon={Gem} 
             title="Tokens Claimed" 
             value={totalClaimed ? totalClaimed.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} 
-            subValue={`${claimedClicks ? claimedClicks.toLocaleString() : '0'} clicks converted`}
+            subValue={`${claimedClicks ? claimedClicks.toLocaleString('en-US') : '0'} clicks converted`}
             tooltipText="The total amount of tokens you have successfully claimed from your clicks." 
             isAnimated
             localeOptions={{ maximumFractionDigits: 2 }}
@@ -111,7 +111,7 @@ export default function ProfilePage() {
           <StatCard 
             icon={Hand} 
             title="My Total Clicks" 
-            value={totalClicks ? totalClicks.toLocaleString() : '0'} 
+            value={totalClicks ? totalClicks.toLocaleString('en-US') : '0'} 
             tooltipText="Your lifetime click count. Keep clicking!" 
             isAnimated
             localeOptions={{ maximumFractionDigits: 0 }}
@@ -119,7 +119,7 @@ export default function ProfilePage() {
           <StatCard 
             icon={Hourglass} 
             title="Pending Clicks" 
-            value={pendingClicks ? pendingClicks.toLocaleString() : '0'} 
+            value={pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} 
             tooltipText={pendingClicksTooltip} 
             isAnimated
             localeOptions={{ maximumFractionDigits: 0 }}
@@ -140,7 +140,7 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Claim Your Tokens</CardTitle>
               <CardDescription>
-                You have {pendingClicks ? pendingClicks.toLocaleString() : '0'} clicks ready to be claimed.
+                You have {pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} clicks ready to be claimed.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
