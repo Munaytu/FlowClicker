@@ -183,17 +183,37 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         });
   }, []);
 
+  // Main query for user-specific data (Supabase + Redis)
+  const { data: userData, error: userError } = useQuery({
+    queryKey: ['userData', address],
+    queryFn: async () => {
+      if (!address) return null;
+      return fetchUserData(address, chainId);
+    },
+    enabled: isConnected && !!address && chainId === sonicMainnet.id,
+    refetchInterval: 7000, // Refetch every 7 seconds
+    refetchOnWindowFocus: true,
+  });
+
+  // Effect to update state when user data is fetched or re-fetched
+  useEffect(() => {
+    if (userData) {
+      setState(s => ({ ...s, ...userData, isUserLoaded: true }));
+    }
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch your data.' });
+    }
+  }, [userData, userError, toast]);
+
+
   useEffect(() => {
     if (isConnected && address) {
-      const userId = address;
-      setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId, isUserLoaded: false }));
-      if (chainId === sonicMainnet.id) {
-        fetchUserData(userId, chainId);
-      }
+      setState((s) => ({ ...s, isConnected: true, walletAddress: address, userId: address }));
     } else {
       setState(initialState);
     }
-  }, [isConnected, address, chainId]);
+  }, [isConnected, address]);
 
   useEffect(() => {
     if (isConfirmed && receipt) {
@@ -244,70 +264,30 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   }, [isConfirmed, receipt, claimError, receiptError, txHash, state.pendingClicks, toast, reset]);
 
   const fetchUserData = async (userId: string, chainId: number) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('total_claimed, total_clicks, claimed_clicks')
-      .eq('id', userId)
-      .single();
-
-    if (chainId === sonicMainnet.id) {
-        try {
-            const balance = await readContract(config, {
-                abi: contractAbi,
-                address: contractAddress,
-                functionName: 'balanceOf',
-                args: [userId as `0x${string}`],
-            });
-
-            const decimals = await readContract(config, {
-                abi: contractAbi,
-                address: contractAddress,
-                functionName: 'decimals',
-            });
-
-            const balanceInUnits = Number(balance) / (10 ** Number(decimals));
-
-            if (data && balanceInUnits !== data.total_claimed) {
-                console.log(`Reconciling... DB: ${data.total_claimed}, Chain: ${balanceInUnits}`);
-                setState(s => ({...s, totalClaimed: balanceInUnits}));
-            }
-
-        } catch (e) {
-            console.error("Could not fetch balance for reconciliation", e);
-        }
-    }
-
-    if (error && error.code === 'PGRST116') {
-      const { data: newUser, error: insertError } = await supabase
+    try {
+      const { data, error } = await supabase
         .from('users')
-        .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
         .select('total_claimed, total_clicks, claimed_clicks')
+        .eq('id', userId)
         .single();
 
-      if (insertError) {
-        console.error('Error creating user:', insertError);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not create a new user profile.',
-        });
-      } else if (newUser) {
-        setState((s) => ({
-          ...s,
-          totalClicks: newUser.total_clicks,
-          totalClaimed: newUser.total_claimed,
-          claimedClicks: newUser.claimed_clicks,
-        }));
+      let userData = data;
+
+      if (error && error.code === 'PGRST116') {
+        const { data: newUser, error: insertError } = await supabase
+          .from('users')
+          .insert({ id: userId, total_clicks: 0, total_claimed: 0, claimed_clicks: 0 })
+          .select('total_claimed, total_clicks, claimed_clicks')
+          .single();
+
+        if (insertError) throw new Error('Failed to create user profile.');
+        userData = newUser;
+      } else if (error) {
+        throw new Error('Failed to fetch user data from Supabase.');
       }
-    } else if (error) {
-      console.error('Error fetching user data:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not fetch your data.',
-      });
-    } else if (data) {
-      if (data) {
+
+      if (!userData) throw new Error('No user data found.');
+
       // Fetch pending clicks directly from Redis
       const redisClicksResponse = await fetch('/api/get-redis-clicks', {
         method: 'POST',
@@ -323,16 +303,19 @@ function UserProviderContent({ children }: { children: ReactNode }) {
         console.error('Failed to fetch pending clicks from Redis API');
       }
 
-      setState((s) => ({
-        ...s,
-        totalClicks: data.total_clicks,
-        totalClaimed: data.total_claimed,
-        claimedClicks: data.claimed_clicks,
-        pendingClicks: redisPendingClicks, // Use value from Redis
-      }));
+      // Return the fetched data instead of setting state directly
+      return {
+        totalClicks: userData.total_clicks,
+        totalClaimed: userData.total_claimed,
+        claimedClicks: userData.claimed_clicks,
+        pendingClicks: redisPendingClicks,
+      };
+
+    } catch (e) {
+      console.error("Error in fetchUserData:", e);
+      toast({ variant: "destructive", title: "Data Sync Error", description: (e as Error).message });
+      return null;
     }
-    }
-    setState((s) => ({ ...s, isUserLoaded: true }));
   };
 
   const connectWallet = () => {
