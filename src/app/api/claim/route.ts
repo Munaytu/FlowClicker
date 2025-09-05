@@ -188,7 +188,7 @@ export async function POST(req: AuthenticatedRequest) {
       }
 
       // 2. Call the modified RPC function to update claimed_clicks
-      const { data: rpcData, error: rpcError } = await supabase.rpc<ClaimRewardsResponse>('claim_rewards', {
+      const { data: rpcData, error: rpcError } = await supabase.rpc<'claim_rewards', ClaimRewardsResponse>('claim_rewards', {
         p_user_id: userId,
         p_clicks_to_claim: onChainClicks, // Use the verified on-chain clicks
       }).single();
