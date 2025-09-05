@@ -3,9 +3,9 @@ import { supabase } from "@/lib/supabase";
 import * as jose from "jose";
 import { z } from "zod";
 import { redis } from "@/lib/redis";
-import { createPublicClient, http, formatUnits, Hash, decodeEventLog } from 'viem'; // Added viem imports, including Hash
-import { defineChain } from 'viem'; // Import defineChain
-import { contractAbi, contractAddress } from "@/lib/contract-config"; // Added contract config
+import { createPublicClient, http, formatUnits, Hash, decodeEventLog } from 'viem';
+import { defineChain } from 'viem';
+import { contractAbi, contractAddress } from "@/lib/contract-config";
 
 const claimBodySchema = z.object({
   txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash"),
@@ -77,7 +77,7 @@ export async function POST(req: AuthenticatedRequest) {
     const sonic = defineChain({
       id: 146,
       name: 'Sonic',
-      nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 }, // Assuming 18 decimals for currency
+      nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 },
       rpcUrls: {
         default: { http: ['https://rpc.soniclabs.com'] },
       },
@@ -87,7 +87,7 @@ export async function POST(req: AuthenticatedRequest) {
     });
 
     const publicClient = createPublicClient({
-      chain: sonic, // Use the Sonic chain
+      chain: sonic,
       transport: http(),
     });
 
@@ -98,7 +98,6 @@ export async function POST(req: AuthenticatedRequest) {
         return NextResponse.json({ error: "Blockchain transaction failed or not found." }, { status: 400 });
       }
 
-      // Find and decode the TokensClaimed event
       const tokensClaimedEvent = contractAbi.find(
         (item: any) => item.type === 'event' && item.name === 'TokensClaimed'
       );
@@ -113,26 +112,23 @@ export async function POST(req: AuthenticatedRequest) {
       let verifiedPlayer: `0x${string}` | undefined;
 
       for (const log of receipt.logs) {
-        // Check if the log's address matches the contract address
         if (log.address.toLowerCase() !== contractAddress.toLowerCase()) {
-            continue; // Skip logs not from our contract
+            continue;
         }
         try {
           const decodedLog = decodeEventLog({
-            abi: [tokensClaimedEvent], // Pass only the specific event ABI
+            abi: [tokensClaimedEvent],
             data: log.data,
             topics: log.topics,
           });
 
           if (decodedLog.eventName === 'TokensClaimed') {
-            verifiedPlayer = decodedLog.args.player;
-            verifiedAmount = decodedLog.args.amount;
-            verifiedClicks = decodedLog.args.clicks;
-            break; // Found the event, no need to continue
+            verifiedPlayer = (decodedLog.args as any).player;
+            verifiedAmount = (decodedLog.args as any).amount;
+            verifiedClicks = (decodedLog.args as any).clicks;
+            break;
           }
         } catch (decodeError) {
-          // This log might not be the event we're looking for, or it's malformed.
-          // Continue to the next log.
           continue;
         }
       }
@@ -141,41 +137,34 @@ export async function POST(req: AuthenticatedRequest) {
         return NextResponse.json({ error: "Could not verify claim details from blockchain transaction logs." }, { status: 400 });
       }
 
-      // Convert userId to checksum address for comparison
-      const checksumUserId = userId.toLowerCase(); // Assuming userId is already a valid address string
+      const checksumUserId = userId.toLowerCase();
 
       if (verifiedPlayer.toLowerCase() !== checksumUserId) {
         return NextResponse.json({ error: "Claim initiated by a different address than authenticated user." }, { status: 403 });
       }
 
-      // Convert verifiedAmount from bigint (wei) to a number string, assuming 18 decimals
       const onChainAmount = parseFloat(formatUnits(verifiedAmount, 18));
       const onChainClicks = Number(verifiedClicks);
 
-      // Optional: Add a check if the amount from the request body matches the on-chain amount
-      // This is a sanity check, the on-chain amount is authoritative.
       if (onChainAmount !== parseFloat(amount)) {
         console.warn(`Discrepancy: Requested amount ${amount} vs On-chain amount ${onChainAmount} for user ${userId}`);
-        // You might choose to return an error here or just log a warning.
-        // For now, we'll proceed with the on-chain amount.
       }
 
-      // Optional: Add a check if the clicks from the request body matches the on-chain clicks
       if (onChainClicks !== clicksToClaim) {
         console.warn(`Discrepancy: Requested clicks ${clicksToClaim} vs On-chain clicks ${onChainClicks} for user ${userId}`);
-        // For now, we'll proceed with the on-chain clicks.
       }
 
       // --- Blockchain Verification End ---
 
       // --- Update Supabase with verified on-chain data ---
-      // 1. Update total_claimed with the user's current total balance from the blockchain
-      const currentOnChainBalance = parseFloat(formatUnits(await publicClient.readContract({
+      const balanceOfResult = await publicClient.readContract({
         address: contractAddress,
         abi: contractAbi,
         functionName: 'balanceOf',
         args: [userId as `0x${string}`],
-      }), 18));
+      });
+
+      const currentOnChainBalance = parseFloat(formatUnits(balanceOfResult as bigint, 18));
 
       const { error: updateError } = await supabase
         .from('users')
@@ -187,20 +176,20 @@ export async function POST(req: AuthenticatedRequest) {
         return NextResponse.json({ error: "Failed to update total_claimed in database.", details: updateError.message }, { status: 500 });
       }
 
-      // 2. Call the modified RPC function to update claimed_clicks
-      const { data: rpcData, error: rpcError } = await supabase.rpc<'claim_rewards', ClaimRewardsResponse>('claim_rewards', {
+      const { data, error: rpcError } = await supabase.rpc('claim_rewards', {
         p_user_id: userId,
-        p_clicks_to_claim: onChainClicks, // Use the verified on-chain clicks
+        p_clicks_to_claim: onChainClicks,
       }).single();
 
+      const rpcData = data as ClaimRewardsResponse;
+
       if (rpcError || !rpcData || !rpcData.success) {
-        const errorMessage = rpcError?.message || rpcData?.message || "An unknown RPC error occurred";
+        const errorMessage = rpcError?.message || (rpcData as any)?.message || "An unknown RPC error occurred";
         console.error(`RPC Error for user ${userId}:`, errorMessage);
         return NextResponse.json({ error: "Failed to process claim in database", details: errorMessage }, { status: 500 });
       }
 
-      // If the transaction was successful, decrement the clicks in Redis
-      await redis.decrby(userClicksKey, onChainClicks); // Use onChainClicks here
+      await redis.decrby(userClicksKey, onChainClicks);
 
       console.log(`Successfully claimed ${onChainClicks} clicks and updated total_claimed to ${currentOnChainBalance} for user ${userId}.`);
 
