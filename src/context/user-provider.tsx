@@ -272,7 +272,17 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
   // --- CONTEXT VALUE ---
 
+  const isClaiming = claimTokensMutation.isPending || isConfirming;
+
   const addClick = () => {
+    if (isClaiming) {
+      toast({
+        variant: 'destructive',
+        title: 'Claim in Progress',
+        description: 'Please wait for your claim to complete before clicking again.',
+      });
+      return;
+    }
     if (!state.isUserLoaded) {
       toast({ title: 'Please wait', description: 'Data is loading...' });
       return;
@@ -283,8 +293,6 @@ function UserProviderContent({ children }: { children: ReactNode }) {
   const claimTokens = () => {
     claimTokensMutation.mutate();
   };
-
-  const isClaiming = claimTokensMutation.isPending || isConfirming;
 
   return (
     <UserContext.Provider

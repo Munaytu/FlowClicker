@@ -50,7 +50,7 @@ export default function GamePage() {
                 const randomColor = colors[Math.floor(Math.random() * colors.length)];
                 setAnimations(prev => [...prev, { id: animationIdCounter, text: "BUY $FLOW", color: randomColor }]);
               }}
-              disabled={!isConnected}
+              disabled={!isConnected || isClaiming}
               className="group relative h-48 w-48 md:h-64 md:w-64 rounded-full border-8 border-primary bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60 overflow-hidden"
               aria-label="Click to earn"
               whileHover={{ scale: 1.05 }}

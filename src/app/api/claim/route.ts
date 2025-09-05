@@ -189,11 +189,11 @@ export async function POST(req: AuthenticatedRequest) {
         return NextResponse.json({ error: "Failed to process claim in database", details: errorMessage }, { status: 500 });
       }
 
-      const currentRedisClicks = Number(await redis.get(userClicksKey) || 0);
-      const newRedisClicks = Math.max(0, currentRedisClicks - onChainClicks);
-      await redis.set(userClicksKey, newRedisClicks);
+      // Atomically reset the user's pending clicks to 0 in Redis.
+      // This is the authoritative step to prevent double-counting and ensure the UI updates correctly.
+      await redis.set(userClicksKey, 0);
 
-      console.log(`Successfully claimed ${onChainClicks} clicks. Redis clicks updated from ${currentRedisClicks} to ${newRedisClicks} for user ${userId}.`);
+      console.log(`Successfully claimed ${onChainClicks} clicks. Redis pending clicks for user ${userId} have been reset to 0.`);
 
       return NextResponse.json({ claimedAmount: onChainAmount, claimedClicks: onChainClicks, new_total_claimed: currentOnChainBalance, success: rpcData.success, message: rpcData.message });
 
