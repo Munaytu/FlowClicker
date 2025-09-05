@@ -175,14 +175,60 @@ function UserProviderContent({ children }: { children: ReactNode }) {
 
   const claimTokensMutation = useMutation({
     mutationFn: async () => {
-      // ... (logic to get signature and call writeContractAsync remains the same)
+      if (state.pendingClicks <= 0 || !state.walletAddress) {
+        throw new Error("No clicks to claim.");
+      }
+      if (state.isWrongNetwork) {
+        switchToSonicNetwork();
+        throw new Error("Wrong network. Please switch to Sonic.");
+      }
+
+      const sigResponse = await fetch('/api/get-claim-signature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
+        },
+        body: JSON.stringify({ player: state.walletAddress, clicks: state.pendingClicks }),
+      });
+
+      const { signature, nonce, token } = await sigResponse.json();
+
+      if (!sigResponse.ok) {
+        throw new Error('Failed to get claim signature');
+      }
+
+      const hash = await writeContractAsync({
+        chainId: sonicMainnet.id,
+        address: contractAddress,
+        abi: contractAbi,
+        functionName: 'claim',
+        args: [state.walletAddress, BigInt(state.pendingClicks), signature],
+      });
+      
+      // Also call the backend API to notify it of the claim tx
+      await fetch('/api/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ 
+            txHash: hash, 
+            amount: state.claimableTokens,
+          }),
+      });
+
+      return hash;
     },
     onSuccess: (hash) => {
       setTxHash(hash);
+      toast({ title: 'Transaction Submitted', description: 'Waiting for confirmation...' });
     },
     onError: (e: any) => {
       console.error("Claim failed", e);
-      toast({ variant: 'destructive', title: 'Claim Failed', description: e.shortMessage || e.message });
+      toast({
+        variant: 'destructive',
+        title: 'Claim Failed',
+        description: e.message,
+      });
     }
   });
 
