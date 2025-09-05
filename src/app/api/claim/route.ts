@@ -86,8 +86,8 @@ export async function POST(req: AuthenticatedRequest) {
       return NextResponse.json({ error: "Failed to process claim in database", details: errorMessage }, { status: 500 });
     }
 
-    // If the transaction was successful, reset the clicks in Redis
-    await redis.set(userClicksKey, 0);
+    // If the transaction was successful, decrement the clicks in Redis
+    await redis.decrby(userClicksKey, clicksToClaim);
 
     console.log(`Successfully claimed ${clicksToClaim} clicks and ${amount} tokens for user ${userId}.`);
 
