@@ -16,6 +16,46 @@ const clickBodySchema = z.object({
     country: z.string().min(2),
 });
 
+async function getOrCreateUser(userId: string, country: string) {
+  // First, try to select the user
+  const { data: user, error: selectError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .single();
+
+  if (selectError && selectError.code !== 'PGRST116') {
+    // PGRST116 is the code for "No rows found"
+    console.error('Error selecting user:', selectError);
+    throw new Error('Failed to check for user in database.');
+  }
+
+  if (user) {
+    // User exists, return it
+    return user;
+  }
+
+  // User does not exist, create them
+  const { data: newUser, error: insertError } = await supabase
+    .from('users')
+    .insert({
+      id: userId,
+      country: country,
+      total_clicks: 0, // Start with 0, increment will be handled by RPC
+      total_claimed: 0,
+      claimed_clicks: 0,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    console.error('Error creating user:', insertError);
+    throw new Error('Failed to create user in database.');
+  }
+
+  return newUser;
+}
+
 export async function POST(req: NextRequest) {
   try {
     // API Key Authentication
@@ -50,6 +90,9 @@ export async function POST(req: NextRequest) {
         });
     }
 
+    // Ensure user exists before proceeding
+    await getOrCreateUser(userId, country);
+
     const [redisResponse, supabaseResponse] = await Promise.all([
       redis.incr(`user:${userId}:clicks`),
       supabase.rpc('increment_clicks', { p_user_id: userId, p_country_code: country })
@@ -68,6 +111,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ clicks: newClicks });
   } catch (error) {
     console.error('Error in /api/click endpoint:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return new NextResponse(errorMessage, { status: 500 });
   }
 }

@@ -13,6 +13,7 @@ import { contractAddress } from '@/lib/contract-config';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
 import AnimatedNumber from '@/components/ui/animated-number';
+import { formatTokenAmount } from '@/lib/utils';
 
 export default function ProfilePage() {
   const {
@@ -68,6 +69,26 @@ export default function ProfilePage() {
     fetchCountryRank();
   }, [country]);
 
+  useEffect(() => {
+    async function syncBalance() {
+      if (walletAddress) {
+        try {
+          await fetch('/api/sync-balance', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`
+            },
+            body: JSON.stringify({ userId: walletAddress }),
+          });
+        } catch (error) {
+          console.error('Failed to sync balance:', error);
+        }
+      }
+    }
+    syncBalance();
+  }, [walletAddress]);
+
   if (!isConnected || loading) {
     return <div className="container py-10">Loading...</div>;
   }
@@ -76,10 +97,9 @@ export default function ProfilePage() {
   const countryName = countryData ? countryData.name : country;
   const countryFlag = countryData ? countryData.flag : '';
 
-  const pendingClicksTooltip = `You have ${pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
+  const pendingClicksTooltip = `You have ${formatTokenAmount(pendingClicks, {maximumFractionDigits: 0})} un-claimed clicks. The claimable token amount changes in real-time based on a decay mechanism.`;
 
   const balanceAmount = Number(balance?.formatted ?? 0);
-  const usdValue = tokenPriceUSD ? balanceAmount * tokenPriceUSD : 0;
 
   return (
     <div className="container py-10">
@@ -90,45 +110,47 @@ export default function ProfilePage() {
         </h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard 
-            icon={Wallet} 
-            title="My Wallet Balance" 
-            value={`${balanceAmount ? balanceAmount.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '0'} ${balance?.symbol}`}
+          <StatCard
+            icon={Wallet}
+            title="My Wallet Balance"
+            value={balanceAmount}
+            currency={balance?.symbol}
             tooltipText="Your current token balance in your connected wallet. Click to view on SonicScan."
             link={`https://sonicscan.org/address/${walletAddress}`}
             isAnimated
             localeOptions={{ maximumFractionDigits: 4 }}
           />
-          <StatCard 
-            icon={Gem} 
-            title="Tokens Claimed" 
-            value={totalClaimed ? totalClaimed.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} 
-            subValue={`${claimedClicks ? claimedClicks.toLocaleString('en-US') : '0'} clicks converted`}
-            tooltipText="The total amount of tokens you have successfully claimed from your clicks." 
+          <StatCard
+            icon={Gem}
+            title="Tokens Claimed"
+            value={totalClaimed}
+            subValue={`${formatTokenAmount(claimedClicks, {maximumFractionDigits: 0})} clicks converted`}
+            tooltipText="The total amount of tokens you have successfully claimed from your clicks."
             isAnimated
-            localeOptions={{ maximumFractionDigits: 2 }}
+            localeOptions={{ maximumFractionDigits: 4 }}
           />
-          <StatCard 
-            icon={Hand} 
-            title="My Total Clicks" 
-            value={totalClicks ? totalClicks.toLocaleString('en-US') : '0'} 
-            tooltipText="Your lifetime click count. Keep clicking!" 
-            isAnimated
-            localeOptions={{ maximumFractionDigits: 0 }}
-          />
-          <StatCard 
-            icon={Hourglass} 
-            title="Pending Clicks" 
-            value={pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} 
-            tooltipText={pendingClicksTooltip} 
+          <StatCard
+            icon={Hand}
+            title="My Total Clicks"
+            value={totalClicks}
+            tooltipText="Your lifetime click count. Keep clicking!"
             isAnimated
             localeOptions={{ maximumFractionDigits: 0 }}
           />
-          <StatCard 
-            icon={Gift} 
-            title="Ready to Claim" 
-            value={`${claimableTokens ? parseFloat(claimableTokens).toLocaleString(undefined, { maximumFractionDigits: 4 }) : '0'} ${balance?.symbol}`}
-            tooltipText="The real-time amount of tokens you will receive for your pending clicks right now." 
+          <StatCard
+            icon={Hourglass}
+            title="Pending Clicks"
+            value={pendingClicks}
+            tooltipText={pendingClicksTooltip}
+            isAnimated
+            localeOptions={{ maximumFractionDigits: 0 }}
+          />
+          <StatCard
+            icon={Gift}
+            title="Ready to Claim"
+            value={claimableTokens}
+            currency={balance?.symbol}
+            tooltipText="The real-time amount of tokens you will receive for your pending clicks right now."
             isAnimated
             localeOptions={{ maximumFractionDigits: 4 }}
           />
@@ -140,14 +162,14 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Claim Your Tokens</CardTitle>
               <CardDescription>
-                You have {pendingClicks ? pendingClicks.toLocaleString('en-US') : '0'} clicks ready to be claimed.
+                You have {formatTokenAmount(pendingClicks, {maximumFractionDigits: 0})} clicks ready to be claimed.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-4xl font-bold">
                 <AnimatedNumber value={Number(claimableTokens)} localeOptions={{ maximumFractionDigits: 4 }} />
               </p>
-              <p className="text-sm text-muted-foreground">${balance?.symbol} Tokens</p>
+              <p className="text-sm text-muted-foreground">{balance?.symbol} Tokens</p>
               <Button
                 size="lg"
                 className="w-full text-lg font-bold mt-4 bg-accent text-accent-foreground hover:bg-accent/90"
@@ -200,7 +222,22 @@ export default function ProfilePage() {
   );
 }
 
-function StatCard({ title, value, subValue, icon: Icon, tooltipText, link, isAnimated = false, localeOptions }: { title: string; value: string; subValue?: string; icon: React.ElementType, tooltipText?: string, link?: string, isAnimated?: boolean, localeOptions?: Intl.NumberFormatOptions }) {
+interface StatCardProps {
+  title: string;
+  value: number | string;
+  subValue?: string;
+  icon: React.ElementType;
+  tooltipText?: string;
+  link?: string;
+  isAnimated?: boolean;
+  localeOptions?: Intl.NumberFormatOptions;
+  currency?: string;
+}
+
+function StatCard({ title, value, subValue, icon: Icon, tooltipText, link, isAnimated = false, localeOptions, currency }: StatCardProps) {
+  const numericValue = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+  const displayValue = typeof value === 'string' && isNaN(numericValue) ? value : formatTokenAmount(numericValue, localeOptions);
+
   const cardContent = (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -223,12 +260,12 @@ function StatCard({ title, value, subValue, icon: Icon, tooltipText, link, isAni
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">
-          {isAnimated ? (
-            <AnimatedNumber value={Number(value.split(' ')[0].replace(/,/g, ''))} localeOptions={localeOptions} />
+          {isAnimated && typeof numericValue === 'number' && !isNaN(numericValue) ? (
+            <AnimatedNumber value={numericValue} localeOptions={localeOptions} />
           ) : (
-            value
+            displayValue
           )}
-           {value.split(' ').length > 1 && ` ${value.split(' ')[1]}`}
+          {currency && ` ${currency}`}
         </div>
         {subValue && <p className="text-xs text-muted-foreground">{subValue}</p>}
       </CardContent>
