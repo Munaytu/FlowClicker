@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import * as jose from "jose";
 import { z } from "zod";
 import { redis } from "@/lib/redis";
-import { createPublicClient, http, formatUnits } from 'viem'; // Added viem imports
+import { createPublicClient, http, formatUnits, Hash } from 'viem'; // Added viem imports, including Hash
 import { defineChain } from 'viem'; // Import defineChain
 import { contractAbi, contractAddress } from "@/lib/contract-config"; // Added contract config
 
@@ -92,7 +92,7 @@ export async function POST(req: AuthenticatedRequest) {
     });
 
     try {
-      const receipt = await publicClient.getTransactionReceipt(txHash);
+      const receipt = await publicClient.getTransactionReceipt(txHash as Hash);
 
       if (!receipt || receipt.status !== 'success') {
         return NextResponse.json({ error: "Blockchain transaction failed or not found." }, { status: 400 });
