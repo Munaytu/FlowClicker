@@ -63,7 +63,7 @@ export async function POST(req: AuthenticatedRequest) {
       return NextResponse.json({ error: "Invalid input", details: validation.error.flatten() }, { status: 400 });
     }
 
-    const { txHash, amount } = validation.data; // txHash is now part of validation.data
+    const { txHash, amount } = validation.data as { txHash: `0x${string}`, amount: string };
     const userClicksKey = `user:${userId}:clicks`;
 
     // Authoritative read from Redis
@@ -92,7 +92,7 @@ export async function POST(req: AuthenticatedRequest) {
     });
 
     try {
-      const receipt = await publicClient.getTransactionReceipt(txHash as `0x${string}`);
+      const receipt = await publicClient.getTransactionReceipt(txHash);
 
       if (!receipt || receipt.status !== 'success') {
         return NextResponse.json({ error: "Blockchain transaction failed or not found." }, { status: 400 });
